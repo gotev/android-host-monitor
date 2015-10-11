@@ -105,24 +105,30 @@ public class HostMonitor {
     }
 
     /**
+     * Set the broadcast action string to use when broadcasting host status changes
+     * @param broadcastAction (e.g.: com.example.yourapp.hoststatus)
+     */
+    public static synchronized void setBroadcastAction(String broadcastAction) {
+        mBroadcastActionString = broadcastAction;
+    }
+
+    /**
      * Starts the HostMonitor.
      * @param context application context
-     * @param broadcastActionString string used as an action when broadcasting reachability status
-     * @param checkIntervalSecs how often (in seconds) to monitor the configured hosts
+     * @param checkInterval how often (in seconds) to monitor the configured hosts
      * @param connectTimeout how many seconds to wait for the connection to the TCP socket to be
      *                       established
      */
-    public static synchronized void start(Context context, String broadcastActionString,
-                                          int checkIntervalSecs, int connectTimeout) {
+    public static synchronized void start(Context context, int checkInterval, int connectTimeout) {
         if (context == null) {
             throw new IllegalArgumentException("Please provide a valid application context");
         }
 
-        if (broadcastActionString == null || broadcastActionString.isEmpty()) {
-            throw new IllegalArgumentException("Please provide a valid broadcast action (e.g. com.yourapp.hostchange)");
+        if (mBroadcastActionString == null || mBroadcastActionString.isEmpty()) {
+            throw new IllegalArgumentException("Please call setBroadcastAction method before start");
         }
 
-        if (checkIntervalSecs <= 0) {
+        if (checkInterval <= 0) {
             throw new IllegalArgumentException("Please provide a checkInterval in secs > 0");
         }
 
@@ -136,8 +142,7 @@ public class HostMonitor {
         mActive = true;
 
         mContext = context.getApplicationContext();
-        mBroadcastActionString = broadcastActionString;
-        mCheckInterval = checkIntervalSecs;
+        mCheckInterval = checkInterval;
         mConnectTimeout = connectTimeout * 1000;
 
         start();
