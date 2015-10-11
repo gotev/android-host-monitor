@@ -3,6 +3,7 @@ package com.alexbbb.androidhostmonitor;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.util.Log;
 
 import java.net.InetSocketAddress;
@@ -188,6 +189,8 @@ public class HostMonitor {
             scheduler = Executors.newScheduledThreadPool(1);
         }
 
+        initializeConnectionType();
+
         mScheduledTask = scheduler.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
@@ -238,6 +241,18 @@ public class HostMonitor {
                 return currentReachable;
             }
         }, 0, mCheckInterval, TimeUnit.SECONDS);
+    }
+
+    private static void initializeConnectionType() {
+        ConnectivityManager connMan =
+                (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo info = connMan.getActiveNetworkInfo();
+        if (info == null) {
+            mConnectionType = -1;
+        } else {
+            mConnectionType = info.getType();
+        }
     }
 
     private static synchronized void notifyStatus(InetSocketAddress host, boolean reachable) {
