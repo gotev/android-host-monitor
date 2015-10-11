@@ -221,7 +221,8 @@ public class HostMonitor {
                 try {
                     socket = new Socket();
 
-                    socket.connect(host, mConnectTimeout);
+                    socket.connect(new InetSocketAddress(host.getHostString(), host.getPort()),
+                                   mConnectTimeout);
                     currentReachable = true;
 
                 } catch (Exception exc) {
