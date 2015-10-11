@@ -60,7 +60,7 @@ public class HostMonitor {
      * @param hostAddress host to monitor
      * @param port tcp port to monitor
      */
-    public static void addHostToMonitor(final String hostAddress, final int port) {
+    public static void add(final String hostAddress, final int port) {
         Host newHost = new Host(hostAddress, port);
 
         if (!mHosts.containsKey(newHost)) {
@@ -74,7 +74,7 @@ public class HostMonitor {
      * @param hostAddress host address to check
      * @param port tcp port to check
      */
-    public static void removeHostToMonitor(final String hostAddress, final int port) {
+    public static void remove(final String hostAddress, final int port) {
         mHosts.remove(new Host(hostAddress, port));
     }
 
@@ -82,17 +82,26 @@ public class HostMonitor {
      * Returns the last available host reachability status.
      * @param hostAddress host address to check
      * @param port tcp port to check
-     * @return null if the status could not be determined (this happens when you try to get the
-     * status of a non-monitored host or the monitor scanner has not retured any result yet)
+     * @return true if the host is reachable, false if it's not reachable or null
+     * if the status could not be determined (this happens when you try to get the
+     * status of a non-monitored host or the monitor task has not retured any result yet)
      */
-    public static Boolean isHostReachable(final String hostAddress, int port) {
+    public static Boolean isReachable(final String hostAddress, int port) {
         return mHosts.get(new Host(hostAddress, port));
     }
 
-        /**
-         * Gets the currently configured broadcast action string.
-         * @return
-         */
+    /**
+     * Set the broadcast action string to use when broadcasting host status changes
+     * @param broadcastAction (e.g.: com.example.yourapp.hoststatus)
+     */
+    public static synchronized void setBroadcastAction(String broadcastAction) {
+        mBroadcastActionString = broadcastAction;
+    }
+
+    /**
+     * Gets the currently configured broadcast action string.
+     * @return
+     */
     public static synchronized String getBroadcastActionString() {
         return mBroadcastActionString;
     }
@@ -102,14 +111,6 @@ public class HostMonitor {
      */
     public static synchronized void enableDebug() {
         mDebugEnabled = true;
-    }
-
-    /**
-     * Set the broadcast action string to use when broadcasting host status changes
-     * @param broadcastAction (e.g.: com.example.yourapp.hoststatus)
-     */
-    public static synchronized void setBroadcastAction(String broadcastAction) {
-        mBroadcastActionString = broadcastAction;
     }
 
     /**
