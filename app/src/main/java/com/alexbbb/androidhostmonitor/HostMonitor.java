@@ -6,7 +6,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
 
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -50,7 +49,7 @@ public class HostMonitor {
     private static ScheduledExecutorService scheduler;
     private static ScheduledFuture<?> mScheduledTask = null;
 
-    private static ConcurrentHashMap<InetSocketAddress, Boolean> mHosts = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<Host, Boolean> mHosts = new ConcurrentHashMap<>();
     private static boolean mActive = false;
     private static int mConnectionType = -1;
     private static boolean mDebugEnabled = false;
@@ -62,7 +61,7 @@ public class HostMonitor {
      * @param port tcp port to monitor
      */
     public static void addHostToMonitor(final String hostAddress, final int port) {
-        InetSocketAddress newHost = InetSocketAddress.createUnresolved(hostAddress, port);
+        Host newHost = new Host(hostAddress, port);
 
         if (!mHosts.containsKey(newHost)) {
             mHosts.put(newHost, false);
@@ -76,7 +75,7 @@ public class HostMonitor {
      * @param port tcp port to check
      */
     public static void removeHostToMonitor(final String hostAddress, final int port) {
-        mHosts.remove(InetSocketAddress.createUnresolved(hostAddress, port));
+        mHosts.remove(new Host(hostAddress, port));
     }
 
     /**
@@ -87,7 +86,7 @@ public class HostMonitor {
      * status of a non-monitored host or the monitor scanner has not retured any result yet)
      */
     public static Boolean isHostReachable(final String hostAddress, int port) {
-        return mHosts.get(InetSocketAddress.createUnresolved(hostAddress, port));
+        return mHosts.get(new Host(hostAddress, port));
     }
 
         /**
@@ -180,7 +179,7 @@ public class HostMonitor {
         mScheduledTask = null;
 
         if (sendDisconnectedStatus) {
-            for (InetSocketAddress host : mHosts.keySet()) {
+            for (Host host : mHosts.keySet()) {
                 mHosts.put(host, false);
                 notifyStatus(host, false);
             }
@@ -209,12 +208,12 @@ public class HostMonitor {
 
                 log(LOG_TAG, "Starting reachability check");
 
-                for (InetSocketAddress host : mHosts.keySet()) {
+                for (Host host : mHosts.keySet()) {
                     Boolean previousReachable = mHosts.get(host);
                     boolean currentReachable = isReachable(host);
 
                     if (previousReachable == null || previousReachable != currentReachable) {
-                        log(LOG_TAG, "Host " + host.getHostString() + " is currently " +
+                        log(LOG_TAG, "Host " + host.getHost() + " is currently " +
                                 (currentReachable ? "reachable" : "unreachable") +
                                 " on port " + host.getPort());
                         mHosts.put(host, currentReachable);
@@ -225,15 +224,13 @@ public class HostMonitor {
                 log(LOG_TAG, "Reachability check completed");
             }
 
-            private boolean isReachable(InetSocketAddress host) {
+            private boolean isReachable(Host host) {
                 boolean currentReachable;
                 Socket socket = null;
 
                 try {
                     socket = new Socket();
-
-                    socket.connect(new InetSocketAddress(host.getHostString(), host.getPort()),
-                                   mConnectTimeout);
+                    socket.connect(host.resolve(), mConnectTimeout);
                     currentReachable = true;
 
                 } catch (Exception exc) {
@@ -263,8 +260,8 @@ public class HostMonitor {
         }
     }
 
-    private static synchronized void notifyStatus(InetSocketAddress host, boolean reachable) {
-        HostStatus status = new HostStatus().setHost(host.getHostString())
+    private static synchronized void notifyStatus(Host host, boolean reachable) {
+        HostStatus status = new HostStatus().setHost(host.getHost())
                                             .setPort(host.getPort())
                                             .setReachable(reachable)
                                             .setConnectionType(getConnectionType());
