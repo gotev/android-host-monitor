@@ -157,7 +157,7 @@ public class HostMonitor {
      *                               when there's no connectivity available, to preserve battery
      *                               life.
      */
-    public static synchronized void stopAndDeactivate(boolean sendDisconnectedStatus) {
+    public static synchronized void shutdown(boolean sendDisconnectedStatus) {
         mActive = false;
         if (mScheduledTask == null) return;
 
