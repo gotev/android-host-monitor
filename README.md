@@ -1,7 +1,7 @@
 # Android Host Monitor
 Easily monitor remote hosts and ports reachability on Android.
 
-[Gradle and Maven dependency instructions (with JitPack.io)](https://jitpack.io/#alexbbb/android-host-monitor/44d311549c)
+[Gradle and Maven dependency instructions (with JitPack.io)](https://jitpack.io/#alexbbb/android-host-monitor/1.0)
 
 [Setup instructions](#setup)
 
@@ -92,7 +92,7 @@ public class YourActivity extends Activity {
         public void onHostStatusChanged(HostStatus status) {
            Log.i(LOG_TAG, status.toString());
         }  
-      });
+      };
 
     @Override
     protected void onResume() {
