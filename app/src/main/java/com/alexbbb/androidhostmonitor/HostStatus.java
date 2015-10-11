@@ -84,4 +84,10 @@ public class HostStatus implements Parcelable {
         reachable = (in.readInt() == 1);
         connectionType = in.readInt();
     }
+
+    @Override
+    public String toString() {
+        return "{ \"host\": \"" + host + "\", \"port\": " + port +
+                ", \"reachable\": " + reachable + ", \"connection_type\": " + connectionType + "}";
+    }
 }
