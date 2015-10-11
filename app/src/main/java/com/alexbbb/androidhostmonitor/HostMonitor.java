@@ -46,7 +46,7 @@ public class HostMonitor {
     private static String mBroadcastActionString;
 
     private static ScheduledExecutorService scheduler;
-    private static ScheduledFuture<Runnable> mScheduledTask = null;
+    private static ScheduledFuture<?> mScheduledTask = null;
 
     private static ConcurrentHashMap<InetSocketAddress, Boolean> mHosts = new ConcurrentHashMap<>();
     private static boolean mActive = false;
@@ -187,7 +187,7 @@ public class HostMonitor {
             scheduler = Executors.newScheduledThreadPool(1);
         }
 
-        scheduler.scheduleAtFixedRate(new Runnable() {
+        mScheduledTask = scheduler.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 if (mHosts.isEmpty()) {
