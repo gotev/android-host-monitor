@@ -58,8 +58,8 @@ public class HostMonitor {
      * @param hostAddress host to monitor
      * @param port tcp port to monitor
      */
-    public static void addHostToMonitor(final String hostAddress, int port) {
-        InetSocketAddress newHost = new InetSocketAddress(hostAddress, port);
+    public static void addHostToMonitor(final String hostAddress, final int port) {
+        InetSocketAddress newHost = InetSocketAddress.createUnresolved(hostAddress, port);
 
         if (!mHosts.containsKey(newHost)) {
             mHosts.put(newHost, null);
@@ -72,8 +72,8 @@ public class HostMonitor {
      * @param hostAddress host address to check
      * @param port tcp port to check
      */
-    public static void removeHostToMonitor(final String hostAddress, int port) {
-        mHosts.remove(new InetSocketAddress(hostAddress, port));
+    public static void removeHostToMonitor(final String hostAddress, final int port) {
+        mHosts.remove(InetSocketAddress.createUnresolved(hostAddress, port));
     }
 
     /**
@@ -84,13 +84,13 @@ public class HostMonitor {
      * status of a non-monitored host or the monitor scanner has not retured any result yet)
      */
     public static Boolean isHostReachable(final String hostAddress, int port) {
-        return mHosts.get(new InetSocketAddress(hostAddress, port));
+        return mHosts.get(InetSocketAddress.createUnresolved(hostAddress, port));
     }
 
-    /**
-     * Gets the currently configured broadcast action string.
-     * @return
-     */
+        /**
+         * Gets the currently configured broadcast action string.
+         * @return
+         */
     public static synchronized String getBroadcastActionString() {
         return mBroadcastActionString;
     }
