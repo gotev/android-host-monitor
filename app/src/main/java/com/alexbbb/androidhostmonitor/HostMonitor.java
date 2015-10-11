@@ -2,6 +2,7 @@ package com.alexbbb.androidhostmonitor;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
 import android.util.Log;
 
 import java.net.InetSocketAddress;
@@ -238,16 +239,25 @@ public class HostMonitor {
         }, 0, mCheckInterval, TimeUnit.SECONDS);
     }
 
-    private static void notifyStatus(InetSocketAddress host, boolean reachable) {
+    private static synchronized void notifyStatus(InetSocketAddress host, boolean reachable) {
         HostStatus status = new HostStatus().setHost(host.getHostString())
                                             .setPort(host.getPort())
                                             .setReachable(reachable)
-                                            .setConnectionType(mConnectionType);
+                                            .setConnectionType(getConnectionType());
 
         Intent broadcastStatus = new Intent();
         broadcastStatus.setAction(mBroadcastActionString);
         broadcastStatus.putExtra(PARAM_STATUS, status);
 
         mContext.sendBroadcast(broadcastStatus);
+    }
+
+    private static ConnectionType getConnectionType() {
+        if (mConnectionType < 0) return ConnectionType.NONE;
+        if (mConnectionType == ConnectivityManager.TYPE_MOBILE) return ConnectionType.MOBILE;
+        if (mConnectionType == ConnectivityManager.TYPE_WIFI) return ConnectionType.WIFI;
+
+        Log.e(LOG_TAG, "Unimplemented connection type: " + mConnectionType + ", open a bug issue!");
+        return ConnectionType.NONE;
     }
 }

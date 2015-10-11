@@ -11,7 +11,7 @@ public class HostStatus implements Parcelable {
     private String host;
     private int port;
     private boolean reachable;
-    private int connectionType;
+    private ConnectionType connectionType;
 
     public HostStatus() { }
 
@@ -42,11 +42,11 @@ public class HostStatus implements Parcelable {
         return this;
     }
 
-    public int getConnectionType() {
+    public ConnectionType getConnectionType() {
         return connectionType;
     }
 
-    public HostStatus setConnectionType(int connectionType) {
+    public HostStatus setConnectionType(ConnectionType connectionType) {
         this.connectionType = connectionType;
         return this;
     }
@@ -75,19 +75,19 @@ public class HostStatus implements Parcelable {
         dest.writeString(host);
         dest.writeInt(port);
         dest.writeInt(reachable ? 1 : 0);
-        dest.writeInt(connectionType);
+        dest.writeInt(connectionType.ordinal());
     }
 
     private HostStatus(Parcel in) {
         host = in.readString();
         port = in.readInt();
         reachable = (in.readInt() == 1);
-        connectionType = in.readInt();
+        connectionType = ConnectionType.values()[in.readInt()];
     }
 
     @Override
     public String toString() {
         return "{ \"host\": \"" + host + "\", \"port\": " + port +
-                ", \"reachable\": " + reachable + ", \"connection_type\": " + connectionType + "}";
+                ", \"reachable\": " + reachable + ", \"connection_type\": \"" + connectionType + "\"}";
     }
 }
