@@ -53,6 +53,7 @@ public class HostMonitor {
     private static ConcurrentHashMap<InetSocketAddress, Boolean> mHosts = new ConcurrentHashMap<>();
     private static boolean mActive = false;
     private static int mConnectionType = -1;
+    private static boolean mDebugEnabled = false;
 
     /**
      * Add a host to monitor. If the monitoring service is currently running, the check will be
@@ -95,6 +96,13 @@ public class HostMonitor {
          */
     public static synchronized String getBroadcastActionString() {
         return mBroadcastActionString;
+    }
+
+    /**
+     * Enable library debugging log.
+     */
+    public static synchronized void enableDebug() {
+        mDebugEnabled = true;
     }
 
     /**
@@ -166,7 +174,7 @@ public class HostMonitor {
     protected static synchronized void stop(boolean sendDisconnectedStatus) {
         if (mScheduledTask == null) return;
 
-        Log.d(LOG_TAG, "stopping");
+        log(LOG_TAG, "stopping");
 
         mScheduledTask.cancel(false);
         mScheduledTask = null;
@@ -182,10 +190,10 @@ public class HostMonitor {
     protected static synchronized void start() {
         if (mScheduledTask != null || !mActive) return;
 
-        Log.d(LOG_TAG, "starting");
+        log(LOG_TAG, "starting");
 
         if (scheduler == null) {
-            Log.d(LOG_TAG, "creating new thread pool");
+            log(LOG_TAG, "creating new thread pool");
             scheduler = Executors.newScheduledThreadPool(1);
         }
 
@@ -195,18 +203,18 @@ public class HostMonitor {
             @Override
             public void run() {
                 if (mHosts.isEmpty()) {
-                    Log.d(LOG_TAG, "No hosts to check at this moment");
+                    log(LOG_TAG, "No hosts to check at this moment");
                     return;
                 }
 
-                Log.d(LOG_TAG, "Starting reachability check");
+                log(LOG_TAG, "Starting reachability check");
 
                 for (InetSocketAddress host : mHosts.keySet()) {
                     Boolean previousReachable = mHosts.get(host);
                     boolean currentReachable = isReachable(host);
 
                     if (previousReachable == null || previousReachable != currentReachable) {
-                        Log.d(LOG_TAG, "Host " + host.getHostString() + " is currently " +
+                        log(LOG_TAG, "Host " + host.getHostString() + " is currently " +
                                 (currentReachable ? "reachable" : "unreachable") +
                                 " on port " + host.getPort());
                         mHosts.put(host, currentReachable);
@@ -214,7 +222,7 @@ public class HostMonitor {
                     }
                 }
 
-                Log.d(LOG_TAG, "Reachability check completed");
+                log(LOG_TAG, "Reachability check completed");
             }
 
             private boolean isReachable(InetSocketAddress host) {
@@ -275,5 +283,11 @@ public class HostMonitor {
 
         Log.e(LOG_TAG, "Unimplemented connection type: " + mConnectionType + ", open a bug issue!");
         return ConnectionType.NONE;
+    }
+
+    protected static void log(String tag, String message) {
+        if (mDebugEnabled) {
+            Log.d(tag, message);
+        }
     }
 }

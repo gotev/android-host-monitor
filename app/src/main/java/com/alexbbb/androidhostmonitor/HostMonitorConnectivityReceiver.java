@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.util.Log;
 
 /**
  * Monitors connectivity changes and starts or stops the HostMonitor accordingly.
@@ -23,12 +22,12 @@ public class HostMonitorConnectivityReceiver extends BroadcastReceiver {
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
 
         if (networkInfo != null && networkInfo.isConnected()) {
-            Log.d(LOG_TAG, "connection available :)");
+            HostMonitor.log(LOG_TAG, "connection available :)");
             HostMonitor.setConnectionType(networkInfo.getType());
             HostMonitor.start();
 
         } else {
-            Log.d(LOG_TAG, "connection unavailable :(");
+            HostMonitor.log(LOG_TAG, "connection unavailable :(");
             HostMonitor.setConnectionType(-1);
             HostMonitor.stop(true);
         }
