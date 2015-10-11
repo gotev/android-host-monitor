@@ -62,7 +62,7 @@ public class HostMonitor {
         InetSocketAddress newHost = InetSocketAddress.createUnresolved(hostAddress, port);
 
         if (!mHosts.containsKey(newHost)) {
-            mHosts.put(newHost, null);
+            mHosts.put(newHost, false);
         }
     }
 
