@@ -195,18 +195,25 @@ public class HostMonitor {
                     return;
                 }
 
+                Log.d(LOG_TAG, "Starting reachability check");
+
                 for (InetSocketAddress host : mHosts.keySet()) {
                     Boolean previousReachable = mHosts.get(host);
-                    boolean currentReachable = isCurrentReachable(host);
+                    boolean currentReachable = isReachable(host);
 
                     if (previousReachable == null || previousReachable != currentReachable) {
+                        Log.d(LOG_TAG, "Host " + host.getHostString() + " is currently " +
+                                (currentReachable ? "reachable" : "unreachable") +
+                                " on port " + host.getPort());
                         mHosts.put(host, currentReachable);
                         notifyStatus(host, currentReachable);
                     }
                 }
+
+                Log.d(LOG_TAG, "Reachability check completed");
             }
 
-            private boolean isCurrentReachable(InetSocketAddress host) {
+            private boolean isReachable(InetSocketAddress host) {
                 boolean currentReachable;
                 Socket socket = null;
 
