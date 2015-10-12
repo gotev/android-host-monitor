@@ -82,7 +82,7 @@ You can receive status updates also in your activity:
 ```java
 public class YourActivity extends Activity {
 
-    private static final String TAG = "AndroidUploadService";
+    private static final String TAG = "YourActivity";
 
     ...
 
