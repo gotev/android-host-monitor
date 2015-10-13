@@ -1,6 +1,8 @@
 # Android Host Monitor
 Easily monitor remote hosts and ports reachability on Android.
 
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Android%20Host%20Monitor-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/2626)
+
 [Gradle and Maven dependency instructions (with JitPack.io)](https://jitpack.io/#alexbbb/android-host-monitor/1.0)
 
 [Setup instructions](#setup)
@@ -82,7 +84,7 @@ You can receive status updates also in your activity:
 ```java
 public class YourActivity extends Activity {
 
-    private static final String TAG = "AndroidUploadService";
+    private static final String TAG = "YourActivity";
 
     ...
 
