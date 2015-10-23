@@ -1,0 +1,110 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
+
+def siteUrl = 'https://github.com/alexbbb/android-host-monitor/'
+def gitUrl = 'https://github.com/alexbbb/android-host-monitor.git'
+def projectName = "android-host-monitor"
+def projectDesc = "Easily monitor remote hosts and ports reachability on Android."
+def projectGroup = "com.alexbbb"
+group = projectGroup
+version = "1.0"
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.1"
+
+    defaultConfig {
+        minSdkVersion 14
+        targetSdkVersion 23
+        versionCode 1
+        versionName version
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+}
+
+// add the following information to the file: local.properties situated in the parent directory of
+// where this file is:
+//
+// bintray.user=alexbbb
+// bintray.apikey=api key got from the bintray profile
+//
+// be sure to add local.properties to the .gitignore!
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+install {
+    repositories.mavenInstaller {
+        pom.project {
+            packaging 'aar'
+            groupId projectGroup
+            version version
+            url siteUrl
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                }
+            }
+            developers {
+                developer {
+                    id 'alexbbb'
+                    name 'Alex Gotev'
+                }
+            }
+            scm {
+                connection gitUrl
+                developerConnection gitUrl
+                url siteUrl
+
+            }
+        }
+    }
+}
+
+bintray {
+    user = properties.getProperty("bintray.user")
+    key = properties.getProperty("bintray.apikey")
+    configurations = ['archives']
+    pkg {
+        repo = "maven"
+        name = projectName
+        desc = projectDesc
+        websiteUrl = siteUrl
+        vcsUrl = gitUrl
+        issueTrackerUrl = siteUrl + "/issues/"
+        licenses = ["Apache-2.0"]
+        labels = ['android', 'host', 'monitor', 'library', 'background', 'reachability']
+        publicDownloadNumbers = true
+        publish = true
+    }
+}
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
