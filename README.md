@@ -3,8 +3,6 @@ Easily monitor remote hosts and ports reachability on Android.
 
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Android%20Host%20Monitor-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/2626)
 
-[Gradle and Maven dependency instructions (with JitPack.io)](https://jitpack.io/#alexbbb/android-host-monitor/1.0)
-
 [Setup instructions](#setup)
 
 ## Purpose
@@ -18,8 +16,21 @@ Android Host Monitor is made of two parts:
 When your device is connected (WiFi or Mobile), the scheduler is run at the interval that you have configured. When the device is not connected (it may be transitioning from a network to another one, airplane mode may be activated or the user is in the middle of a desert :D, ...) the scheduler is stopped to preserve battery life and a reachability status change gets broadcasted for all the configured hosts. When the connection becomes available again, the scheduler gets automatically restarted and a reachability test gets done immediately. The `HostMonitor` stops and doesn't do anything automatically only when you explicitly shut it down (read below to discover how).
 
 ## Setup <a id="setup"></a>
-Add the dependecy to your project using maven or gradle. After that, do a clean and build to get the latest artifact.
-First of all, you have to initialize the library. I suggest you to do that in your `Application` subclass:
+Ensure that you have jcenter in your gradle build file:
+```
+repositories {
+    jcenter()
+}
+```
+then in your dependencies section add:
+
+```
+dependencies {
+    compile 'com.alexbbb:hostmonitor:1.0'
+}
+```
+
+and do a project sync. To start using the library, you have to initialize it. I suggest you to do that in your `Application` subclass:
 
 ```java
 public class Initializer extends Application {
