@@ -49,7 +49,7 @@ public class HostMonitor {
     private static ScheduledExecutorService scheduler;
     private static ScheduledFuture<?> mScheduledTask = null;
 
-    private static ConcurrentHashMap<Host, Boolean> mHosts = new ConcurrentHashMap<>();
+    private static volatile ConcurrentHashMap<Host, Boolean> mHosts = new ConcurrentHashMap<>();
     private static boolean mActive = false;
     private static int mConnectionType = -1;
     private static boolean mDebugEnabled = false;
@@ -79,6 +79,13 @@ public class HostMonitor {
     }
 
     /**
+     * Remove all the monitored hosts.
+     */
+    public static void removeAll() {
+        mHosts.clear();
+    }
+
+    /**
      * Returns the last available host reachability status.
      * @param hostAddress host address to check
      * @param port tcp port to check
@@ -100,7 +107,7 @@ public class HostMonitor {
 
     /**
      * Gets the currently configured broadcast action string.
-     * @return
+     * @return string
      */
     public static synchronized String getBroadcastActionString() {
         return mBroadcastActionString;
@@ -207,27 +214,32 @@ public class HostMonitor {
         mScheduledTask = scheduler.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                if (mHosts.isEmpty()) {
-                    log(LOG_TAG, "No hosts to check at this moment");
-                    return;
-                }
-
-                log(LOG_TAG, "Starting reachability check");
-
-                for (Host host : mHosts.keySet()) {
-                    Boolean previousReachable = mHosts.get(host);
-                    boolean currentReachable = isReachable(host);
-
-                    if (previousReachable == null || previousReachable != currentReachable) {
-                        log(LOG_TAG, "Host " + host.getHost() + " is currently " +
-                                (currentReachable ? "reachable" : "unreachable") +
-                                " on port " + host.getPort());
-                        mHosts.put(host, currentReachable);
-                        notifyStatus(host, currentReachable);
+                try {
+                    if (mHosts.isEmpty()) {
+                        log(LOG_TAG, "No hosts to check at this moment");
+                        return;
                     }
-                }
 
-                log(LOG_TAG, "Reachability check completed");
+                    log(LOG_TAG, "Starting reachability check");
+
+                    for (Host host : mHosts.keySet()) {
+                        Boolean previousReachable = mHosts.get(host);
+                        boolean currentReachable = isReachable(host);
+
+                        if (previousReachable == null || previousReachable != currentReachable) {
+                            log(LOG_TAG, "Host " + host.getHost() + " is currently " +
+                                    (currentReachable ? "reachable" : "unreachable") +
+                                    " on port " + host.getPort());
+                            mHosts.put(host, currentReachable);
+                            notifyStatus(host, currentReachable);
+                        }
+                    }
+
+                    log(LOG_TAG, "Reachability check completed");
+
+                } catch (Exception exc) {
+                    Log.e(LOG_TAG, "Unexpected error in reachability check", exc);
+                }
             }
 
             private boolean isReachable(Host host) {
@@ -246,7 +258,9 @@ public class HostMonitor {
                     if (socket != null) {
                         try {
                             socket.close();
-                        } catch (Exception exc) {}
+                        } catch (Exception exc) {
+                            Log.d(LOG_TAG, "Error while closing socket.", exc);
+                        }
                     }
                 }
                 return currentReachable;
