@@ -49,7 +49,7 @@ public class HostMonitor {
     private static ScheduledExecutorService scheduler;
     private static ScheduledFuture<?> mScheduledTask = null;
 
-    private static volatile ConcurrentHashMap<Host, Boolean> mHosts = new ConcurrentHashMap<>();
+    private static volatile ConcurrentHashMap<Host, Status> mHosts = new ConcurrentHashMap<>();
     private static boolean mActive = false;
     private static int mConnectionType = -1;
     private static boolean mDebugEnabled = false;
@@ -64,7 +64,7 @@ public class HostMonitor {
         Host newHost = new Host(hostAddress, port);
 
         if (!mHosts.containsKey(newHost)) {
-            mHosts.put(newHost, false);
+            mHosts.put(newHost, new Status());
         }
     }
 
@@ -91,10 +91,12 @@ public class HostMonitor {
      * @param port tcp port to check
      * @return true if the host is reachable, false if it's not reachable or null
      * if the status could not be determined (this happens when you try to get the
-     * status of a non-monitored host or the monitor task has not retured any result yet)
+     * status of a non-monitored host)
      */
     public static Boolean isReachable(final String hostAddress, int port) {
-        return mHosts.get(new Host(hostAddress, port));
+        Status status = mHosts.get(new Host(hostAddress, port));
+        if (status == null) return null;
+        return status.isReachable();
     }
 
     /**
@@ -193,8 +195,10 @@ public class HostMonitor {
 
         if (sendDisconnectedStatus) {
             for (Host host : mHosts.keySet()) {
-                mHosts.put(host, false);
-                notifyStatus(host, false);
+                ConnectionType prevType = mHosts.get(host).getConnectionType();
+                Status newStatus = new Status(false, getConnectionType());
+                mHosts.put(host, newStatus);
+                notifyStatus(host, false, prevType, newStatus.getConnectionType());
             }
         }
     }
@@ -223,15 +227,18 @@ public class HostMonitor {
                     log(LOG_TAG, "Starting reachability check");
 
                     for (Host host : mHosts.keySet()) {
-                        Boolean previousReachable = mHosts.get(host);
+                        Status prevStatus = mHosts.get(host);
                         boolean currentReachable = isReachable(host);
+                        ConnectionType currentConnectionType = getConnectionType();
 
-                        if (previousReachable == null || previousReachable != currentReachable) {
+                        if (prevStatus.isReachable() != currentReachable
+                            || prevStatus.getConnectionType() != currentConnectionType) {
                             log(LOG_TAG, "Host " + host.getHost() + " is currently " +
                                     (currentReachable ? "reachable" : "unreachable") +
-                                    " on port " + host.getPort());
-                            mHosts.put(host, currentReachable);
-                            notifyStatus(host, currentReachable);
+                                    " on port " + host.getPort() + " via " + currentConnectionType);
+                            mHosts.put(host, new Status(currentReachable, currentConnectionType));
+                            notifyStatus(host, currentReachable,
+                                         prevStatus.getConnectionType(), currentConnectionType);
                         }
                     }
 
@@ -280,11 +287,14 @@ public class HostMonitor {
         }
     }
 
-    private static synchronized void notifyStatus(Host host, boolean reachable) {
+    private static synchronized void notifyStatus(Host host, boolean reachable,
+                                                  ConnectionType previousConnectionType,
+                                                  ConnectionType currentConnectionType) {
         HostStatus status = new HostStatus().setHost(host.getHost())
                                             .setPort(host.getPort())
                                             .setReachable(reachable)
-                                            .setConnectionType(getConnectionType());
+                                            .setPreviousConnectionType(previousConnectionType)
+                                            .setConnectionType(currentConnectionType);
 
         Intent broadcastStatus = new Intent();
         broadcastStatus.setAction(mBroadcastActionString);

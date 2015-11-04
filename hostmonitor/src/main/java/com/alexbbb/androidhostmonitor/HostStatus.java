@@ -11,6 +11,7 @@ public class HostStatus implements Parcelable {
     private String host;
     private int port;
     private boolean reachable;
+    private ConnectionType previousConnectionType;
     private ConnectionType connectionType;
 
     public HostStatus() { }
@@ -51,6 +52,15 @@ public class HostStatus implements Parcelable {
         return this;
     }
 
+    public ConnectionType getPreviousConnectionType() {
+        return previousConnectionType;
+    }
+
+    public HostStatus setPreviousConnectionType(ConnectionType connectionType) {
+        this.previousConnectionType = connectionType;
+        return this;
+    }
+
     // This is used to regenerate the object.
     // All Parcelables must have a CREATOR that implements these two methods
     public static final Parcelable.Creator<HostStatus> CREATOR = new Parcelable.Creator<HostStatus>() {
@@ -76,6 +86,7 @@ public class HostStatus implements Parcelable {
         dest.writeInt(port);
         dest.writeInt(reachable ? 1 : 0);
         dest.writeInt(connectionType.ordinal());
+        dest.writeInt(previousConnectionType.ordinal());
     }
 
     private HostStatus(Parcel in) {
@@ -83,11 +94,13 @@ public class HostStatus implements Parcelable {
         port = in.readInt();
         reachable = (in.readInt() == 1);
         connectionType = ConnectionType.values()[in.readInt()];
+        previousConnectionType = ConnectionType.values()[in.readInt()];
     }
 
     @Override
     public String toString() {
         return "{ \"host\": \"" + host + "\", \"port\": " + port +
-                ", \"reachable\": " + reachable + ", \"connection_type\": \"" + connectionType + "\"}";
+                ", \"reachable\": " + reachable + ", \"connection_type\": \"" + connectionType +
+                "\", \"prev_connection_type\": \"" + previousConnectionType + "\"}";
     }
 }

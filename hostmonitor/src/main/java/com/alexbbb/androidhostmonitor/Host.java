@@ -6,9 +6,9 @@ import java.net.InetSocketAddress;
  * Represents a host to monitor.
  * @author alexbbb (Aleksandar Gotev)
  */
-public class Host {
-    private String host;
-    private int port;
+class Host {
+    private final String host;
+    private final int port;
 
     public Host(String host, int port) {
         this.host = host;
