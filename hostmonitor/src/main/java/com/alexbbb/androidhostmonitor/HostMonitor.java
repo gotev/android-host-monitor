@@ -195,10 +195,11 @@ public class HostMonitor {
 
         if (sendDisconnectedStatus) {
             for (Host host : mHosts.keySet()) {
-                ConnectionType prevType = mHosts.get(host).getConnectionType();
+                Status prevStatus = mHosts.get(host);
                 Status newStatus = new Status(false, getConnectionType());
                 mHosts.put(host, newStatus);
-                notifyStatus(host, false, prevType, newStatus.getConnectionType());
+                notifyStatus(host, prevStatus.isReachable(), false,
+                             prevStatus.getConnectionType(), newStatus.getConnectionType());
             }
         }
     }
@@ -237,7 +238,7 @@ public class HostMonitor {
                                     (currentReachable ? "reachable" : "unreachable") +
                                     " on port " + host.getPort() + " via " + currentConnectionType);
                             mHosts.put(host, new Status(currentReachable, currentConnectionType));
-                            notifyStatus(host, currentReachable,
+                            notifyStatus(host, prevStatus.isReachable(), currentReachable,
                                          prevStatus.getConnectionType(), currentConnectionType);
                         }
                     }
@@ -287,11 +288,14 @@ public class HostMonitor {
         }
     }
 
-    private static synchronized void notifyStatus(Host host, boolean reachable,
+    private static synchronized void notifyStatus(Host host,
+                                                  boolean previousReachable,
+                                                  boolean reachable,
                                                   ConnectionType previousConnectionType,
                                                   ConnectionType currentConnectionType) {
         HostStatus status = new HostStatus().setHost(host.getHost())
                                             .setPort(host.getPort())
+                                            .setPreviousReachable(previousReachable)
                                             .setReachable(reachable)
                                             .setPreviousConnectionType(previousConnectionType)
                                             .setConnectionType(currentConnectionType);

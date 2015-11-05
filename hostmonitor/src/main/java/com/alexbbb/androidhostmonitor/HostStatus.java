@@ -10,6 +10,7 @@ public class HostStatus implements Parcelable {
 
     private String host;
     private int port;
+    private boolean previousReachable;
     private boolean reachable;
     private ConnectionType previousConnectionType;
     private ConnectionType connectionType;
@@ -31,6 +32,15 @@ public class HostStatus implements Parcelable {
 
     public HostStatus setPort(int port) {
         this.port = port;
+        return this;
+    }
+
+    public boolean isPreviousReachable() {
+        return previousReachable;
+    }
+
+    public HostStatus setPreviousReachable(boolean previousReachable) {
+        this.previousReachable = previousReachable;
         return this;
     }
 
@@ -61,6 +71,14 @@ public class HostStatus implements Parcelable {
         return this;
     }
 
+    public boolean connectionTypeChanged() {
+        return previousConnectionType != connectionType;
+    }
+
+    public boolean reachabilityChanged() {
+        return previousReachable != reachable;
+    }
+
     // This is used to regenerate the object.
     // All Parcelables must have a CREATOR that implements these two methods
     public static final Parcelable.Creator<HostStatus> CREATOR = new Parcelable.Creator<HostStatus>() {
@@ -84,6 +102,7 @@ public class HostStatus implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(host);
         dest.writeInt(port);
+        dest.writeInt(previousReachable ? 1 : 0);
         dest.writeInt(reachable ? 1 : 0);
         dest.writeInt(connectionType.ordinal());
         dest.writeInt(previousConnectionType.ordinal());
@@ -92,6 +111,7 @@ public class HostStatus implements Parcelable {
     private HostStatus(Parcel in) {
         host = in.readString();
         port = in.readInt();
+        previousReachable = (in.readInt() == 1);
         reachable = (in.readInt() == 1);
         connectionType = ConnectionType.values()[in.readInt()];
         previousConnectionType = ConnectionType.values()[in.readInt()];
@@ -100,6 +120,7 @@ public class HostStatus implements Parcelable {
     @Override
     public String toString() {
         return "{ \"host\": \"" + host + "\", \"port\": " + port +
+                ", \"prev_reachable\": " + previousReachable +
                 ", \"reachable\": " + reachable + ", \"connection_type\": \"" + connectionType +
                 "\", \"prev_connection_type\": \"" + previousConnectionType + "\"}";
     }
