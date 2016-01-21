@@ -131,7 +131,7 @@ HostMonitor.shutdown(true);
 
 ## License
 
-    Copyright (C) 2015 Aleksandar Gotev
+    Copyright (C) 2015-2016 Aleksandar Gotev
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
