@@ -64,7 +64,9 @@ public class HostMonitor {
         Host newHost = new Host(hostAddress, port);
 
         if (!mHosts.containsKey(newHost)) {
-            mHosts.put(newHost, new Status());
+            //set the initial status to reachable with unknown type, since status is not known
+            //before the first reachability test
+            mHosts.put(newHost, new Status(true, ConnectionType.NONE));
         }
     }
 
