@@ -1,8 +1,8 @@
-package com.alexbbb.androidhostmonitor;
+package net.gotev.hostmonitor;
 
 /**
  * Represents the status of a monitored host.
- * @author Aleksandar Gotev
+ * @author gotev (Aleksandar Gotev)
  */
 class Status {
     private boolean reachable;

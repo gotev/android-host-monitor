@@ -1,10 +1,10 @@
-package com.alexbbb.androidhostmonitor;
+package net.gotev.hostmonitor;
 
 import java.net.InetSocketAddress;
 
 /**
  * Represents a host to monitor.
- * @author alexbbb (Aleksandar Gotev)
+ * @author gotev (Aleksandar Gotev)
  */
 class Host {
     private final String host;

@@ -1,4 +1,4 @@
-package com.alexbbb.androidhostmonitor;
+package net.gotev.hostmonitor;
 
 import android.content.Context;
 import android.content.Intent;
@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Static class which periodically monitors configured hosts reachability.
- * @author alexbbb (Aleksandar Gotev)
+ * @author gotev (Aleksandar Gotev)
  */
 public class HostMonitor {
 

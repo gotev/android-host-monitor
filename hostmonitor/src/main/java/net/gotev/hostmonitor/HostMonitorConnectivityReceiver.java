@@ -1,4 +1,4 @@
-package com.alexbbb.androidhostmonitor;
+package net.gotev.hostmonitor;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -8,7 +8,7 @@ import android.net.NetworkInfo;
 
 /**
  * Monitors connectivity changes and starts or stops the HostMonitor accordingly.
- * @author alexbbb (Aleksandar Gotev)
+ * @author gotev (Aleksandar Gotev)
  */
 public class HostMonitorConnectivityReceiver extends BroadcastReceiver {
 

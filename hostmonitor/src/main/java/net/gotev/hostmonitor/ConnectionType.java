@@ -1,8 +1,8 @@
-package com.alexbbb.androidhostmonitor;
+package net.gotev.hostmonitor;
 
 /**
  * Enumeration of the connection types.
- * @author alexbbb (Aleksandar Gotev)
+ * @author gotev (Aleksandar Gotev)
  */
 public enum ConnectionType {
     NONE,

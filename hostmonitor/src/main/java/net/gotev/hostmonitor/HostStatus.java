@@ -1,10 +1,10 @@
-package com.alexbbb.androidhostmonitor;
+package net.gotev.hostmonitor;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * @author alexbbb (Aleksandar Gotev)
+ * @author gotev (Aleksandar Gotev)
  */
 public class HostStatus implements Parcelable {
 

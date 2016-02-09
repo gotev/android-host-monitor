@@ -1,4 +1,4 @@
-package com.alexbbb.androidhostmonitor;
+package net.gotev.hostmonitor;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -7,7 +7,7 @@ import android.content.IntentFilter;
 
 /**
  * Reference implementation of the HostMonitor broadcast receiver.
- * @author alexbbb (Aleksandar Gotev)
+ * @author gotev (Aleksandar Gotev)
  */
 public class HostMonitorBroadcastReceiver extends BroadcastReceiver {
 
