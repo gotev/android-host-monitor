@@ -23,8 +23,11 @@ public class HostMonitorBroadcastReceiver extends BroadcastReceiver {
     }
 
     /**
-     * Register this upload receiver.
-     * It's recommended to register the receiver in Activity's onResume method.
+     * Register this host monitor receiver.
+     * If you use this receiver in an {@link android.app.Activity}, you have to call this method inside
+     * {@link android.app.Activity#onResume()}, after {@code super.onResume();}.<br>
+     * If you use it in a {@link android.app.Service}, you have to
+     * call this method inside {@link android.app.Service#onCreate()}, after {@code super.onCreate();}.
      *
      * @param context context in which to register this receiver
      */
@@ -41,8 +44,11 @@ public class HostMonitorBroadcastReceiver extends BroadcastReceiver {
     }
 
     /**
-     * Unregister this upload receiver.
-     * It's recommended to unregister the receiver in Activity's onPause method.
+     * Unregister this host monitor receiver.
+     * If you use this receiver in an {@link android.app.Activity}, you have to call this method inside
+     * {@link android.app.Activity#onPause()}, after {@code super.onPause();}.<br>
+     * If you use it in a {@link android.app.Service}, you have to
+     * call this method inside {@link android.app.Service#onDestroy()}.
      *
      * @param context context in which to unregister this receiver
      */
