@@ -22,12 +22,12 @@ public class HostMonitorConnectivityReceiver extends BroadcastReceiver {
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
 
         if (networkInfo != null && networkInfo.isConnected()) {
-            HostMonitor.log(LOG_TAG, "connection available :)");
+            Logger.debug(LOG_TAG, "connection available :)");
             HostMonitor.setConnectionType(networkInfo.getType());
             HostMonitor.start();
 
         } else {
-            HostMonitor.log(LOG_TAG, "connection unavailable :(");
+            Logger.debug(LOG_TAG, "connection unavailable :(");
             HostMonitor.setConnectionType(-1);
             HostMonitor.stop(true);
         }
