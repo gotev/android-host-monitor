@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.util.Log;
 
 import java.net.Socket;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,7 +28,7 @@ public class HostMonitor {
     /**
      * Default check interval.
      */
-    public static final int DEFAULT_CHEK_INTERVAL = 30;
+    public static final int DEFAULT_CHECK_INTERVAL = 300;
 
     /**
      * Default socket connection timeout.
@@ -52,7 +51,6 @@ public class HostMonitor {
     private static volatile ConcurrentHashMap<Host, Status> mHosts = new ConcurrentHashMap<>();
     private static boolean mActive = false;
     private static int mConnectionType = -1;
-    private static boolean mDebugEnabled = false;
 
     /**
      * Add a host to monitor. If the monitoring service is currently running, the check will be
@@ -115,13 +113,6 @@ public class HostMonitor {
      */
     public static synchronized String getBroadcastActionString() {
         return mBroadcastActionString;
-    }
-
-    /**
-     * Enable library debugging log.
-     */
-    public static synchronized void enableDebug() {
-        mDebugEnabled = true;
     }
 
     /**
@@ -190,7 +181,7 @@ public class HostMonitor {
     protected static synchronized void stop(boolean sendDisconnectedStatus) {
         if (mScheduledTask == null) return;
 
-        log(LOG_TAG, "stopping");
+        Logger.debug(LOG_TAG, "stopping");
 
         mScheduledTask.cancel(false);
         mScheduledTask = null;
@@ -209,10 +200,10 @@ public class HostMonitor {
     protected static synchronized void start() {
         if (mScheduledTask != null || !mActive) return;
 
-        log(LOG_TAG, "starting");
+        Logger.debug(LOG_TAG, "starting");
 
         if (scheduler == null) {
-            log(LOG_TAG, "creating new thread pool");
+            Logger.debug(LOG_TAG, "creating new thread pool");
             scheduler = Executors.newScheduledThreadPool(1);
         }
 
@@ -223,11 +214,11 @@ public class HostMonitor {
             public void run() {
                 try {
                     if (mHosts.isEmpty()) {
-                        log(LOG_TAG, "No hosts to check at this moment");
+                        Logger.debug(LOG_TAG, "No hosts to check at this moment");
                         return;
                     }
 
-                    log(LOG_TAG, "Starting reachability check");
+                    Logger.debug(LOG_TAG, "Starting reachability check");
 
                     for (Host host : mHosts.keySet()) {
                         Status prevStatus = mHosts.get(host);
@@ -236,7 +227,7 @@ public class HostMonitor {
 
                         if (prevStatus.isReachable() != currentReachable
                             || prevStatus.getConnectionType() != currentConnectionType) {
-                            log(LOG_TAG, "Host " + host.getHost() + " is currently " +
+                            Logger.debug(LOG_TAG, "Host " + host.getHost() + " is currently " +
                                     (currentReachable ? "reachable" : "unreachable") +
                                     " on port " + host.getPort() + " via " + currentConnectionType);
                             mHosts.put(host, new Status(currentReachable, currentConnectionType));
@@ -245,10 +236,10 @@ public class HostMonitor {
                         }
                     }
 
-                    log(LOG_TAG, "Reachability check completed");
+                    Logger.debug(LOG_TAG, "Reachability check completed");
 
                 } catch (Exception exc) {
-                    Log.e(LOG_TAG, "Unexpected error in reachability check", exc);
+                    Logger.error(LOG_TAG, "Unexpected error in reachability check", exc);
                 }
             }
 
@@ -269,7 +260,7 @@ public class HostMonitor {
                         try {
                             socket.close();
                         } catch (Exception exc) {
-                            Log.d(LOG_TAG, "Error while closing socket.", exc);
+                            Logger.debug(LOG_TAG, "Error while closing socket.");
                         }
                     }
                 }
@@ -295,12 +286,13 @@ public class HostMonitor {
                                                   boolean reachable,
                                                   ConnectionType previousConnectionType,
                                                   ConnectionType currentConnectionType) {
-        HostStatus status = new HostStatus().setHost(host.getHost())
-                                            .setPort(host.getPort())
-                                            .setPreviousReachable(previousReachable)
-                                            .setReachable(reachable)
-                                            .setPreviousConnectionType(previousConnectionType)
-                                            .setConnectionType(currentConnectionType);
+        HostStatus status = new HostStatus()
+                .setHost(host.getHost())
+                .setPort(host.getPort())
+                .setPreviousReachable(previousReachable)
+                .setReachable(reachable)
+                .setPreviousConnectionType(previousConnectionType)
+                .setConnectionType(currentConnectionType);
 
         Intent broadcastStatus = new Intent();
         broadcastStatus.setAction(mBroadcastActionString);
@@ -314,13 +306,7 @@ public class HostMonitor {
         if (mConnectionType == ConnectivityManager.TYPE_MOBILE) return ConnectionType.MOBILE;
         if (mConnectionType == ConnectivityManager.TYPE_WIFI) return ConnectionType.WIFI;
 
-        Log.e(LOG_TAG, "Unimplemented connection type: " + mConnectionType + ", open a bug issue!");
+        Logger.error(LOG_TAG, "Unimplemented connection type: " + mConnectionType + ", open a bug issue!");
         return ConnectionType.NONE;
-    }
-
-    protected static void log(String tag, String message) {
-        if (mDebugEnabled) {
-            Log.d(tag, message);
-        }
     }
 }
