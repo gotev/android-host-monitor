@@ -10,7 +10,7 @@
         android:allowBackup="true"
         android:supportsRtl="true">
         <receiver
-            android:name=".HostMonitorConnectivityReceiver"
+            android:name=".ConnectivityReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>

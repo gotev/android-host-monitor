@@ -8,7 +8,6 @@ import android.net.NetworkInfo;
 import android.os.PowerManager;
 
 import java.net.Socket;
-import java.util.Iterator;
 
 /**
  * Service which performs reachability checks of the configured hosts and ports.
@@ -20,6 +19,11 @@ public class HostMonitor extends IntentService {
     private static final String ACTION_CHECK = "net.gotev.hostmonitor.check";
 
     private static final String PARAM_CONNECTION_TYPE = "net.gotev.hostmonitor.connection_type";
+
+    /**
+     * Name of the parameter passed in the broadcast intent.
+     */
+    public static final String PARAM_STATUS = "HostStatus";
 
     public HostMonitor() {
         super(LOG_TAG);
@@ -49,7 +53,7 @@ public class HostMonitor extends IntentService {
 
     /**
      * Stops the host monitor check.
-     * @param context
+     * @param context application context
      */
     public static void stop(Context context) {
         context.stopService(new Intent(context, HostMonitor.class));
@@ -71,7 +75,7 @@ public class HostMonitor extends IntentService {
             Logger.debug(LOG_TAG, "No hosts to check at this moment");
 
         } else {
-            ConnectionType connectionType = getConnectionTypeFromIntent(intent);
+            ConnectionType connectionType = getConnectionType(intent);
 
             if (connectionType == ConnectionType.NONE) {
                 notifyThatAllTheHostsAreUnreachable(connectionType, config);
@@ -87,16 +91,12 @@ public class HostMonitor extends IntentService {
                                                      HostMonitorConfig config) {
         Logger.debug(LOG_TAG, "No active connection. Notifying that all the hosts are unreachable");
 
-        Iterator<Host> iterator = config.getHostsMap().keySet().iterator();
-
-        while (iterator.hasNext()) {
-            Host host = iterator.next();
-
+        for (Host host : config.getHostsMap().keySet()) {
             Status previousStatus = config.getHostsMap().get(host);
             Status newStatus = new Status(false, connectionType);
 
             Logger.debug(LOG_TAG, "Host " + host.getHost() + " is currently unreachable on port "
-                                  + host.getPort());
+                    + host.getPort());
 
             config.getHostsMap().put(host, newStatus);
             notifyStatus(config.getBroadcastAction(), host, previousStatus, newStatus);
@@ -108,11 +108,7 @@ public class HostMonitor extends IntentService {
     private void checkReachability(ConnectionType connectionType, HostMonitorConfig config) {
         Logger.debug(LOG_TAG, "Starting reachability check");
 
-        Iterator<Host> iterator = config.getHostsMap().keySet().iterator();
-
-        while (iterator.hasNext()) {
-            Host host = iterator.next();
-
+        for (Host host : config.getHostsMap().keySet()) {
             Status previousStatus = config.getHostsMap().get(host);
             boolean currentReachable = isReachable(host, config.getSocketTimeout(), config.getMaxAttempts());
             Status newStatus = new Status(currentReachable, connectionType);
@@ -129,7 +125,7 @@ public class HostMonitor extends IntentService {
         Logger.debug(LOG_TAG, "Reachability check finished!");
     }
 
-    private ConnectionType getConnectionTypeFromIntent(Intent intent) {
+    private ConnectionType getConnectionType(Intent intent) {
         int connTypeInt = intent.getIntExtra(PARAM_CONNECTION_TYPE, -1);
 
         ConnectionType type;
@@ -158,6 +154,7 @@ public class HostMonitor extends IntentService {
         if (type == ConnectivityManager.TYPE_MOBILE) return ConnectionType.MOBILE;
         if (type == ConnectivityManager.TYPE_WIFI) return ConnectionType.WIFI;
 
+        Logger.error(LOG_TAG, "Unsupported connection type: " + type + ". Returning NONE");
         return ConnectionType.NONE;
     }
 
@@ -195,13 +192,12 @@ public class HostMonitor extends IntentService {
                 }
             }
         }
+
         return reachable;
     }
 
-    private void notifyStatus(String broadcastAction,
-                              Host host,
-                              Status previousStatus,
-                              Status currentStatus) {
+    private void notifyStatus(String broadcastAction, Host host,
+                              Status previousStatus, Status currentStatus) {
         HostStatus status = new HostStatus()
                 .setHost(host.getHost())
                 .setPort(host.getPort())
@@ -210,9 +206,8 @@ public class HostMonitor extends IntentService {
                 .setReachable(currentStatus.isReachable())
                 .setConnectionType(currentStatus.getConnectionType());
 
-        Intent broadcastStatus = new Intent();
-        broadcastStatus.setAction(broadcastAction);
-        broadcastStatus.putExtra(HostStatus.PARAM_STATUS, status);
+        Intent broadcastStatus = new Intent(broadcastAction);
+        broadcastStatus.putExtra(PARAM_STATUS, status);
 
         sendBroadcast(broadcastStatus);
     }

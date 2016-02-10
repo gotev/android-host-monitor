@@ -11,11 +11,6 @@ import com.google.gson.Gson;
  */
 public class HostStatus implements Parcelable {
 
-    /**
-     * Name of the parameter passed in the broadcast intent.
-     */
-    public static final String PARAM_STATUS = "HostStatus";
-
     private String host;
     private int port;
     private boolean previousReachable;

@@ -34,9 +34,7 @@ class Host {
 
         Host host1 = (Host) o;
 
-        if (port != host1.port) return false;
-        return host.equals(host1.host);
-
+        return port == host1.port && host.equals(host1.host);
     }
 
     @Override

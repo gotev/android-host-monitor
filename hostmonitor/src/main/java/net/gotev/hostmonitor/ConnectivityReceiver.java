@@ -6,10 +6,10 @@ import android.content.Intent;
 import android.os.PowerManager;
 
 /**
- * Monitors connectivity changes and starts or stops the HostMonitor accordingly.
+ * Monitors connectivity changes.
  * @author gotev (Aleksandar Gotev)
  */
-public class HostMonitorConnectivityReceiver extends BroadcastReceiver {
+public class ConnectivityReceiver extends BroadcastReceiver {
 
     private static final String LOG_TAG = "HostMonitorCR";
 
@@ -22,8 +22,8 @@ public class HostMonitorConnectivityReceiver extends BroadcastReceiver {
         ConnectionType connectionType = HostMonitor.getCurrentConnectionType(context);
 
         Logger.debug(LOG_TAG, (connectionType == ConnectionType.NONE) ?
-                              "connection unavailable :(" : "connection available :)");
-
+                              "connection unavailable" :
+                              "connection available via " + connectionType);
 
         HostMonitor.start(context, connectionType);
     }

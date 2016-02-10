@@ -19,7 +19,7 @@ public class HostMonitorBroadcastReceiver extends BroadcastReceiver {
             return;
         }
 
-        HostStatus hostStatus = intent.getParcelableExtra(HostStatus.PARAM_STATUS);
+        HostStatus hostStatus = intent.getParcelableExtra(HostMonitor.PARAM_STATUS);
         onHostStatusChanged(hostStatus);
     }
 

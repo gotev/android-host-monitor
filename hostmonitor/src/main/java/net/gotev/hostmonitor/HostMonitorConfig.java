@@ -106,7 +106,8 @@ public class HostMonitorConfig {
     }
 
     /**
-     * Adds a new host to be monitored.
+     * Adds a new host to be monitored. The change will be applied starting from the next
+     * reachability scan.
      * @param host host IP address or FQDN
      * @param port TCP port to check
      * @return {@link HostMonitorConfig}
