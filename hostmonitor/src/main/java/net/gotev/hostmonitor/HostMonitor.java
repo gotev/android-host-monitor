@@ -22,7 +22,7 @@ public class HostMonitor extends IntentService {
     private static final String PARAM_CONNECTION_TYPE = "net.gotev.hostmonitor.connection_type";
 
     public HostMonitor() {
-        super("HostMonitorService");
+        super(LOG_TAG);
     }
 
     /**
