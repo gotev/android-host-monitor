@@ -34,7 +34,7 @@ public class HostMonitor extends IntentService {
      * @param context application context
      * @return intent used to launch the service
      */
-    protected static Intent getCheckIntent(Context context) {
+    static Intent getCheckIntent(Context context) {
         Intent intent = new Intent(context, HostMonitor.class);
         intent.setAction(ACTION_CHECK);
         return intent;
@@ -44,7 +44,7 @@ public class HostMonitor extends IntentService {
      * Starts the host monitor check
      * @param context application context
      */
-    protected static void start(Context context) {
+    static void start(Context context) {
         context.startService(getCheckIntent(context));
     }
 
@@ -53,7 +53,7 @@ public class HostMonitor extends IntentService {
      * @param context application context
      * @param connectionType current connection type
      */
-    protected static void start(Context context, ConnectionType connectionType) {
+    static void start(Context context, ConnectionType connectionType) {
         Intent intent = new Intent(context, HostMonitor.class);
         intent.setAction(ACTION_CHECK);
         intent.putExtra(PARAM_CONNECTION_TYPE, connectionType.ordinal());
@@ -150,7 +150,7 @@ public class HostMonitor extends IntentService {
         return type;
     }
 
-    protected static ConnectionType getCurrentConnectionType(Context context) {
+    static ConnectionType getCurrentConnectionType(Context context) {
         ConnectivityManager connectivityManager =
                 (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 

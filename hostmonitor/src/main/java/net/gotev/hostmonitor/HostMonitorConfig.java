@@ -37,7 +37,7 @@ public class HostMonitorConfig {
     private static final int UNDEFINED = -1;
     private static final int PERIODIC_CHECK_ID = 0;
 
-    private Context mContext;
+    private final Context mContext;
     private SharedPreferences mSharedPreferences;
 
     private Map<Host, Status> mHostsMap;
@@ -62,7 +62,7 @@ public class HostMonitorConfig {
         return mSharedPreferences;
     }
 
-    protected Map<Host, Status> getHostsMap() {
+    Map<Host, Status> getHostsMap() {
         if (mHostsMap == null) {
             String json = getPrefs().getString(KEY_HOSTS, "");
 
@@ -261,7 +261,7 @@ public class HostMonitorConfig {
         return mMaxAttempts;
     }
 
-    protected void saveHostsMap() {
+    void saveHostsMap() {
         Logger.debug(getClass().getSimpleName(), "saving hosts status map");
         Gson gson = new GsonBuilder().enableComplexMapKeySerialization().create();
         getPrefs().edit().putString(KEY_HOSTS, gson.toJson(mHostsMap)).apply();
