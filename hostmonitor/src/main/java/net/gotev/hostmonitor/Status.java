@@ -9,7 +9,7 @@ class Status {
     private ConnectionType connectionType;
 
     public Status() {
-        reachable = false;
+        reachable = true;
         connectionType = ConnectionType.NONE;
     }
 
