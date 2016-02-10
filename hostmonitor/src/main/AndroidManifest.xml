@@ -11,7 +11,7 @@
         android:supportsRtl="true">
         <receiver
             android:name=".ConnectivityReceiver"
-            android:enabled="true"
+            android:enabled="false"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />

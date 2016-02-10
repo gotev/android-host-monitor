@@ -30,13 +30,22 @@ public class HostMonitor extends IntentService {
     }
 
     /**
+     * Returns the {@link Intent} to start the service reachability check.
+     * @param context application context
+     * @return intent used to launch the service
+     */
+    protected static Intent getCheckIntent(Context context) {
+        Intent intent = new Intent(context, HostMonitor.class);
+        intent.setAction(ACTION_CHECK);
+        return intent;
+    }
+
+    /**
      * Starts the host monitor check
      * @param context application context
      */
-    public static void start(Context context) {
-        Intent intent = new Intent(context, HostMonitor.class);
-        intent.setAction(ACTION_CHECK);
-        context.startService(intent);
+    protected static void start(Context context) {
+        context.startService(getCheckIntent(context));
     }
 
     /**

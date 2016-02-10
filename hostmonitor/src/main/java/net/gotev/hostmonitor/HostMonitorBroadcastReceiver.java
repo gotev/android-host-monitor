@@ -68,6 +68,6 @@ public class HostMonitorBroadcastReceiver extends BroadcastReceiver {
      * @param status new host status
      */
     public void onHostStatusChanged(HostStatus status) {
-        //do nothing here
+        Logger.info("HostMonitorBR", "host status changed: " + status);
     }
 }

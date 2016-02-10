@@ -1,5 +1,7 @@
 package net.gotev.hostmonitor;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -33,6 +35,7 @@ public class HostMonitorConfig {
     private static final int DEFAULT_CHECK_INTERVAL = 0; //in milliseconds
     private static final int DEFAULT_MAX_ATTEMPTS = 3;
     private static final int UNDEFINED = -1;
+    private static final int PERIODIC_CHECK_ID = 0;
 
     private Context mContext;
     private SharedPreferences mSharedPreferences;
@@ -206,6 +209,20 @@ public class HostMonitorConfig {
     }
 
     /**
+     * Set check interval in minutes.
+     * 0 means that check interval is disabled (it's the default value).
+     * @param minutes how often to check for hosts reachability
+     * @return {@link HostMonitorConfig}
+     */
+    public HostMonitorConfig setCheckIntervalInMinutes(int minutes) {
+        if (minutes < 0)
+            throw new IllegalArgumentException("Specify a zero or positive check interval!");
+
+        mCheckInterval = minutes * 60 * 1000;
+        return this;
+    }
+
+    /**
      * Get check interval in milliseconds.
      * @return the configured check interval in milliseconds
      */
@@ -245,21 +262,37 @@ public class HostMonitorConfig {
     }
 
     protected void saveHostsMap() {
+        Logger.debug(getClass().getSimpleName(), "saving hosts status map");
         Gson gson = new GsonBuilder().enableComplexMapKeySerialization().create();
         getPrefs().edit().putString(KEY_HOSTS, gson.toJson(mHostsMap)).apply();
     }
 
     /**
      * Resets the currently persisted configuration.
+     * Disables the connectivity receiver and cancels all scheduled periodic checks (if any).
      */
     public static void reset(Context context) {
+        Logger.debug(HostMonitor.class.getSimpleName(), "reset configuration");
         context.getSharedPreferences(PREFS_FILE_NAME, Context.MODE_PRIVATE).edit().clear().apply();
+
+        Util.setBroadcastReceiverEnabled(context, ConnectivityReceiver.class, false);
+
+        Logger.debug(HostMonitor.class.getSimpleName(), "cancelling scheduled checks");
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        alarmManager.cancel(getPeriodicCheckIntent(context));
     }
 
     /**
-     * Saves the configuration changes.
+     * Saves and applies the configuration changes.
+     * If there aren't configured hosts, it disables the {@link ConnectivityReceiver} and cancels
+     * scheduled period checks. If there is at least one configured host, it enables the
+     * {@link ConnectivityReceiver} and re-schedules periodic checks with new settings. If periodic
+     * check interval is set to zero, host reachability checks will be triggered only when the
+     * connectivity status of the device changes.
      */
     public void save() {
+        Logger.debug(getClass().getSimpleName(), "saving configuration");
+
         SharedPreferences.Editor prefs = getPrefs().edit();
 
         if (mHostsMap != null && !mHostsMap.isEmpty()) {
@@ -284,6 +317,32 @@ public class HostMonitorConfig {
         }
 
         prefs.apply();
+
+        boolean thereIsAtLeastOneHost = !getHostsMap().isEmpty();
+        Util.setBroadcastReceiverEnabled(mContext, ConnectivityReceiver.class, thereIsAtLeastOneHost);
+
+        AlarmManager alarmManager = (AlarmManager) mContext.getSystemService(Context.ALARM_SERVICE);
+        PendingIntent intent = getPeriodicCheckIntent(mContext);
+
+        Logger.debug(HostMonitor.class.getSimpleName(), "cancelling scheduled checks");
+        alarmManager.cancel(intent);
+
+        if (thereIsAtLeastOneHost) {
+            if (getCheckInterval() > 0) {
+                Logger.debug(getClass().getSimpleName(), "scheduling periodic checks every " +
+                                                         (getCheckInterval() / 1000) + " seconds");
+                alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,
+                                          System.currentTimeMillis() + getCheckInterval(),
+                                          getCheckInterval(), intent);
+            }
+
+            Logger.debug(getClass().getSimpleName(), "triggering reachability check");
+            HostMonitor.start(mContext);
+        }
     }
 
+    private static PendingIntent getPeriodicCheckIntent(Context context) {
+        return PendingIntent.getBroadcast(context, PERIODIC_CHECK_ID,
+                                          HostMonitor.getCheckIntent(context), 0);
+    }
 }
