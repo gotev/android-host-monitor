@@ -113,12 +113,14 @@ public class HostMonitor extends IntentService {
             boolean currentReachable = isReachable(host, config.getSocketTimeout(), config.getMaxAttempts());
             Status newStatus = new Status(currentReachable, connectionType);
 
-            Logger.debug(LOG_TAG, "Host " + host.getHost() + " is currently " +
-                    (currentReachable ? "reachable" : "unreachable") +
-                    " on port " + host.getPort() + " via " + connectionType);
+            if (!newStatus.equals(previousStatus)) {
+                Logger.debug(LOG_TAG, "Host " + host.getHost() + " is currently " +
+                        (currentReachable ? "reachable" : "unreachable") +
+                        " on port " + host.getPort() + " via " + connectionType);
 
-            config.getHostsMap().put(host, newStatus);
-            notifyStatus(config.getBroadcastAction(), host, previousStatus, newStatus);
+                config.getHostsMap().put(host, newStatus);
+                notifyStatus(config.getBroadcastAction(), host, previousStatus, newStatus);
+            }
         }
 
         config.saveHostsMap();

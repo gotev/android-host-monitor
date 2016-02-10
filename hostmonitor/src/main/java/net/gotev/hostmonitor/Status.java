@@ -33,4 +33,21 @@ class Status {
     public void setConnectionType(ConnectionType connectionType) {
         this.connectionType = connectionType;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Status status = (Status) o;
+
+        return reachable == status.reachable && connectionType == status.connectionType;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (reachable ? 1 : 0);
+        result = 27 * result + connectionType.hashCode();
+        return result;
+    }
 }
