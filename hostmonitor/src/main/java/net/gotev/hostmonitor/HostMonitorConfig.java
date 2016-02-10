@@ -31,15 +31,16 @@ public class HostMonitorConfig {
     private static final int DEFAULT_SOCKET_TIMEOUT = 2000; //in milliseconds
     private static final int DEFAULT_CHECK_INTERVAL = 0; //in milliseconds
     private static final int DEFAULT_MAX_ATTEMPTS = 3;
+    private static final int UNDEFINED = -1;
 
     private Context mContext;
     private SharedPreferences mSharedPreferences;
 
     private Map<Host, Status> mHostsMap;
     private String mBroadcastAction;
-    private int mSocketTimeout;
-    private int mCheckInterval;
-    private int mMaxAttempts;
+    private int mSocketTimeout = UNDEFINED;
+    private int mCheckInterval = UNDEFINED;
+    private int mMaxAttempts = UNDEFINED;
 
     /**
      * Creates a new Host Monitor configuration instance
@@ -239,38 +240,35 @@ public class HostMonitorConfig {
     }
 
     /**
+     * Resets the currently persisted configuration.
+     */
+    public static void reset(Context context) {
+        context.getSharedPreferences(PREFS_FILE_NAME, Context.MODE_PRIVATE).edit().clear().apply();
+    }
+
+    /**
      * Saves the configuration changes.
      */
     public void save() {
         SharedPreferences.Editor prefs = getPrefs().edit();
 
-        if (mHostsMap == null || mHostsMap.isEmpty()) {
-            prefs.remove(KEY_HOSTS);
-        } else {
+        if (mHostsMap != null && !mHostsMap.isEmpty()) {
             prefs.putString(KEY_HOSTS, new Gson().toJson(mHostsMap));
         }
 
-        if (mBroadcastAction == null || mBroadcastAction.isEmpty()) {
-            prefs.remove(KEY_BROADCAST_ACTION);
-        } else {
+        if (mBroadcastAction != null && !mBroadcastAction.isEmpty()) {
             prefs.putString(KEY_BROADCAST_ACTION, mBroadcastAction);
         }
 
-        if (mSocketTimeout <= 0) {
-            prefs.remove(KEY_SOCKET_TIMEOUT);
-        } else {
+        if (mSocketTimeout > 0) {
             prefs.putInt(KEY_SOCKET_TIMEOUT, mSocketTimeout);
         }
 
-        if (mCheckInterval <= 0) {
-            prefs.remove(KEY_CHECK_INTERVAL);
-        } else {
+        if (mCheckInterval >= 0) {
             prefs.putInt(KEY_CHECK_INTERVAL, mCheckInterval);
         }
 
-        if (mMaxAttempts <= 0) {
-            prefs.remove(KEY_MAX_ATTEMPTS);
-        } else {
+        if (mMaxAttempts > 0) {
             prefs.putInt(KEY_MAX_ATTEMPTS, mMaxAttempts);
         }
 
