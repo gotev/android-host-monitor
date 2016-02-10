@@ -65,7 +65,7 @@ public class HostMonitorConfig {
             if (json.isEmpty()) {
                 mHostsMap = new HashMap<>();
             } else {
-                Type typeOfMap = new TypeToken<Map<Host, Status>>(){}.getType();
+                Type typeOfMap = new TypeToken<HashMap<Host, Status>>(){}.getType();
                 mHostsMap = new Gson().fromJson(json, typeOfMap);
             }
         }
