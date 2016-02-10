@@ -61,6 +61,7 @@ public class HostMonitorConfig {
     protected Map<Host, Status> getHostsMap() {
         if (mHostsMap == null) {
             String json = getPrefs().getString(KEY_HOSTS, "");
+            Logger.debug("HostMonitorConfig", "Hosts JSON: " + json);
 
             if (json.isEmpty()) {
                 mHostsMap = new HashMap<>();
