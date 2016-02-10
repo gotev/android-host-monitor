@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.PowerManager;
 
 /**
  * Reference implementation of the HostMonitor broadcast receiver.
@@ -19,8 +20,16 @@ public class HostMonitorBroadcastReceiver extends BroadcastReceiver {
             return;
         }
 
+        PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                                                                  getClass().getSimpleName());
+
+        wakeLock.acquire();
+
         HostStatus hostStatus = intent.getParcelableExtra(HostMonitor.PARAM_STATUS);
         onHostStatusChanged(hostStatus);
+
+        wakeLock.release();
     }
 
     /**
@@ -54,6 +63,8 @@ public class HostMonitorBroadcastReceiver extends BroadcastReceiver {
     /**
      * Method called when there's a host status change.
      * Override this in subclasses to implement your own business logic.
+     * A partial wake lock is automatically held for you when code is executed inside this method.
+     * Once the execution ends, the wake lock gets released.
      * @param status new host status
      */
     public void onHostStatusChanged(HostStatus status) {

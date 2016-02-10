@@ -17,6 +17,8 @@ public class ConnectivityReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        Logger.debug(LOG_TAG, "onReceive");
+
         manageWakeLock(context);
 
         ConnectionType connectionType = HostMonitor.getCurrentConnectionType(context);
