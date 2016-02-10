@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
@@ -61,13 +62,19 @@ public class HostMonitorConfig {
     protected Map<Host, Status> getHostsMap() {
         if (mHostsMap == null) {
             String json = getPrefs().getString(KEY_HOSTS, "");
-            Logger.debug("HostMonitorConfig", "Hosts JSON: " + json);
 
             if (json.isEmpty()) {
                 mHostsMap = new HashMap<>();
             } else {
                 Type typeOfMap = new TypeToken<HashMap<Host, Status>>(){}.getType();
-                mHostsMap = new Gson().fromJson(json, typeOfMap);
+                try {
+                    mHostsMap = new Gson().fromJson(json, typeOfMap);
+                } catch (Exception exc) {
+                    Logger.error(getClass().getSimpleName(),
+                                 "Error while deserializing hosts map: " + json
+                                 + ". Ignoring values.", exc);
+                    mHostsMap = new HashMap<>();
+                }
             }
         }
 
@@ -254,7 +261,8 @@ public class HostMonitorConfig {
         SharedPreferences.Editor prefs = getPrefs().edit();
 
         if (mHostsMap != null && !mHostsMap.isEmpty()) {
-            prefs.putString(KEY_HOSTS, new Gson().toJson(mHostsMap));
+            Gson gson = new GsonBuilder().enableComplexMapKeySerialization().create();
+            prefs.putString(KEY_HOSTS, gson.toJson(mHostsMap));
         }
 
         if (mBroadcastAction != null && !mBroadcastAction.isEmpty()) {
