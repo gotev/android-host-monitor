@@ -3,7 +3,10 @@ package net.gotev.hostmonitor;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.google.gson.Gson;
+
 /**
+ * Contains the current and previous reachability status of a host and port.
  * @author gotev (Aleksandar Gotev)
  */
 public class HostStatus implements Parcelable {
@@ -119,9 +122,6 @@ public class HostStatus implements Parcelable {
 
     @Override
     public String toString() {
-        return "{ \"host\": \"" + host + "\", \"port\": " + port +
-                ", \"prev_reachable\": " + previousReachable +
-                ", \"reachable\": " + reachable + ", \"connection_type\": \"" + connectionType +
-                "\", \"prev_connection_type\": \"" + previousConnectionType + "\"}";
+        return new Gson().toJson(this);
     }
 }
