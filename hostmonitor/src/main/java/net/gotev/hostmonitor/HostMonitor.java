@@ -26,11 +26,21 @@ public class HostMonitor extends IntentService {
     }
 
     /**
+     * Starts the host monitor check
+     * @param context application context
+     */
+    public static void start(Context context) {
+        Intent intent = new Intent(context, HostMonitor.class);
+        intent.setAction(ACTION_CHECK);
+        context.startService(intent);
+    }
+
+    /**
      * Starts the host monitor check.
      * @param context application context
      * @param connectionType current connection type
      */
-    public static void start(Context context, ConnectionType connectionType) {
+    protected static void start(Context context, ConnectionType connectionType) {
         Intent intent = new Intent(context, HostMonitor.class);
         intent.setAction(ACTION_CHECK);
         intent.putExtra(PARAM_CONNECTION_TYPE, connectionType.ordinal());
@@ -43,16 +53,6 @@ public class HostMonitor extends IntentService {
      */
     public static void stop(Context context) {
         context.stopService(new Intent(context, HostMonitor.class));
-    }
-
-    /**
-     * Starts the host monitor check
-     * @param context application context
-     */
-    protected static void start(Context context) {
-        Intent intent = new Intent(context, HostMonitor.class);
-        intent.setAction(ACTION_CHECK);
-        context.startService(intent);
     }
 
     @Override
