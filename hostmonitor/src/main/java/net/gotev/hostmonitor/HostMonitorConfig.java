@@ -244,7 +244,8 @@ public class HostMonitorConfig {
     }
 
     protected void saveHostsMap() {
-        getPrefs().edit().putString(KEY_HOSTS, new Gson().toJson(mHostsMap)).apply();
+        Gson gson = new GsonBuilder().enableComplexMapKeySerialization().create();
+        getPrefs().edit().putString(KEY_HOSTS, gson.toJson(mHostsMap)).apply();
     }
 
     /**
