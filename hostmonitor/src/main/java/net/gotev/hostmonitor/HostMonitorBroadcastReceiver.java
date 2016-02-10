@@ -13,12 +13,13 @@ public class HostMonitorBroadcastReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        String action = HostMonitor.getBroadcastActionString();
+        String action = new HostMonitorConfig(context).getBroadcastAction();
 
-        if (intent == null || action == null || !intent.getAction().equals(action)) return;
+        if (intent == null || action == null || !intent.getAction().equals(action)) {
+            return;
+        }
 
-        HostStatus hostStatus = intent.getParcelableExtra(HostMonitor.PARAM_STATUS);
-
+        HostStatus hostStatus = intent.getParcelableExtra(HostStatus.PARAM_STATUS);
         onHostStatusChanged(hostStatus);
     }
 
@@ -32,14 +33,8 @@ public class HostMonitorBroadcastReceiver extends BroadcastReceiver {
      * @param context context in which to register this receiver
      */
     public void register(final Context context) {
-        String action = HostMonitor.getBroadcastActionString();
-
-        if (action == null) {
-            throw new RuntimeException("You have to start the HostMonitor first!");
-        }
-
         final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(action);
+        intentFilter.addAction(new HostMonitorConfig(context).getBroadcastAction());
         context.registerReceiver(this, intentFilter);
     }
 

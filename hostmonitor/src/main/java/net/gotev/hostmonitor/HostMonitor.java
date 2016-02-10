@@ -1,312 +1,219 @@
 package net.gotev.hostmonitor;
 
+import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.PowerManager;
 
 import java.net.Socket;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.Iterator;
 
 /**
- * Static class which periodically monitors configured hosts reachability.
+ * Service which performs reachability checks of the configured hosts and ports.
  * @author gotev (Aleksandar Gotev)
  */
-public class HostMonitor {
+public class HostMonitor extends IntentService {
 
-    private static final String LOG_TAG = "HostMonitor";
+    private static final String LOG_TAG = HostMonitor.class.getSimpleName();
+    private static final String ACTION_CHECK = "net.gotev.hostmonitor.check";
 
-    /**
-     * Name of the parameter passed in the broadcast intent.
-     */
-    public static final String PARAM_STATUS = "HostStatus";
+    private static final String PARAM_CONNECTION_TYPE = "net.gotev.hostmonitor.connection_type";
 
-    /**
-     * Default check interval.
-     */
-    public static final int DEFAULT_CHECK_INTERVAL = 300;
-
-    /**
-     * Default socket connection timeout.
-     */
-    public static final int DEFAULT_TIMEOUT = 2;
-
-    /**
-     * Private constructor to avoid instantiation.
-     */
-    private HostMonitor() {}
-
-    private static Context mContext;
-    private static int mCheckInterval;
-    private static int mConnectTimeout;
-    private static String mBroadcastActionString;
-
-    private static ScheduledExecutorService scheduler;
-    private static ScheduledFuture<?> mScheduledTask = null;
-
-    private static volatile ConcurrentHashMap<Host, Status> mHosts = new ConcurrentHashMap<>();
-    private static boolean mActive = false;
-    private static int mConnectionType = -1;
-
-    /**
-     * Add a host to monitor. If the monitoring service is currently running, the check will be
-     * performed at the next execution.
-     * @param hostAddress host to monitor
-     * @param port tcp port to monitor
-     */
-    public static void add(final String hostAddress, final int port) {
-        Host newHost = new Host(hostAddress, port);
-
-        if (!mHosts.containsKey(newHost)) {
-            //set the initial status to reachable with unknown type, since status is not known
-            //before the first reachability test
-            mHosts.put(newHost, new Status(true, ConnectionType.NONE));
-        }
+    public HostMonitor() {
+        super("HostMonitorService");
     }
 
     /**
-     * Remove a monitored host. The change will be applied starting from the next
-     * reachability scan.
-     * @param hostAddress host address to check
-     * @param port tcp port to check
-     */
-    public static void remove(final String hostAddress, final int port) {
-        mHosts.remove(new Host(hostAddress, port));
-    }
-
-    /**
-     * Remove all the monitored hosts.
-     */
-    public static void removeAll() {
-        mHosts.clear();
-    }
-
-    /**
-     * Returns the last available host reachability status.
-     * @param hostAddress host address to check
-     * @param port tcp port to check
-     * @return true if the host is reachable, false if it's not reachable or null
-     * if the status could not be determined (this happens when you try to get the
-     * status of a non-monitored host)
-     */
-    public static Boolean isReachable(final String hostAddress, int port) {
-        Status status = mHosts.get(new Host(hostAddress, port));
-        if (status == null) return null;
-        return status.isReachable();
-    }
-
-    /**
-     * Set the broadcast action string to use when broadcasting host status changes
-     * @param broadcastAction (e.g.: com.example.yourapp.hoststatus)
-     */
-    public static synchronized void setBroadcastAction(String broadcastAction) {
-        mBroadcastActionString = broadcastAction;
-    }
-
-    /**
-     * Gets the currently configured broadcast action string.
-     * @return string
-     */
-    public static synchronized String getBroadcastActionString() {
-        return mBroadcastActionString;
-    }
-
-    /**
-     * Starts the HostMonitor.
+     * Starts the host monitor check.
      * @param context application context
-     * @param checkInterval how often (in seconds) to monitor the configured hosts
-     * @param connectTimeout how many seconds to wait for the connection to the TCP socket to be
-     *                       established
+     * @param connectionType current connection type
      */
-    public static synchronized void start(Context context, int checkInterval, int connectTimeout) {
-        if (context == null) {
-            throw new IllegalArgumentException("Please provide a valid application context");
-        }
-
-        if (mBroadcastActionString == null || mBroadcastActionString.isEmpty()) {
-            throw new IllegalArgumentException("Please call setBroadcastAction method before start");
-        }
-
-        if (checkInterval <= 0) {
-            throw new IllegalArgumentException("Please provide a checkInterval in secs > 0");
-        }
-
-        if (connectTimeout <= 0) {
-            throw new IllegalArgumentException("Please provide a connectTimeout in secs > 0");
-        }
-
-        if (mScheduledTask != null) {
-            throw new RuntimeException("Please stop the current execution before starting a new one!");
-        }
-        mActive = true;
-
-        mContext = context.getApplicationContext();
-        mCheckInterval = checkInterval;
-        mConnectTimeout = connectTimeout * 1000;
-
-        start();
+    public static void start(Context context, ConnectionType connectionType) {
+        Intent intent = new Intent(context, HostMonitor.class);
+        intent.setAction(ACTION_CHECK);
+        intent.putExtra(PARAM_CONNECTION_TYPE, connectionType.ordinal());
+        context.startService(intent);
     }
 
     /**
-     * Stops the HostMonitor and prevents automatic restarts on connectivity change.
-     * @param sendDisconnectedStatus true to send a broadcast host status update notifying that
-     *                               all the monitored hosts are unreachable. This is set to true
-     *                               when HostMonitorConnectivityReceiver stops the execution
-     *                               when there's no connectivity available, to preserve battery
-     *                               life.
+     * Stops the host monitor check.
+     * @param context
      */
-    public static synchronized void shutdown(boolean sendDisconnectedStatus) {
-        mActive = false;
-        if (mScheduledTask == null) return;
-
-        stop(sendDisconnectedStatus);
+    public static void stop(Context context) {
+        context.stopService(new Intent(context, HostMonitor.class));
     }
 
     /**
-     * Checks if the HostMonitor is currently running
-     * @return true if the host monitor is currently running, false otherwise
+     * Starts the host monitor check
+     * @param context application context
      */
-    public static synchronized boolean isRunning() {
-        return (mScheduledTask != null);
+    protected static void start(Context context) {
+        Intent intent = new Intent(context, HostMonitor.class);
+        intent.setAction(ACTION_CHECK);
+        context.startService(intent);
     }
 
-    protected static synchronized void setConnectionType(int type) {
-        mConnectionType = type;
-    }
+    @Override
+    protected void onHandleIntent(Intent intent) {
+        if (intent == null || !ACTION_CHECK.equals(intent.getAction())) return;
 
-    protected static synchronized void stop(boolean sendDisconnectedStatus) {
-        if (mScheduledTask == null) return;
+        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
+        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                                                                  getClass().getSimpleName());
 
-        Logger.debug(LOG_TAG, "stopping");
+        wakeLock.acquire();
 
-        mScheduledTask.cancel(false);
-        mScheduledTask = null;
+        HostMonitorConfig config = new HostMonitorConfig(this);
 
-        if (sendDisconnectedStatus) {
-            for (Host host : mHosts.keySet()) {
-                Status prevStatus = mHosts.get(host);
-                Status newStatus = new Status(false, getConnectionType());
-                mHosts.put(host, newStatus);
-                notifyStatus(host, prevStatus.isReachable(), false,
-                             prevStatus.getConnectionType(), newStatus.getConnectionType());
-            }
-        }
-    }
+        if (config.getHostsMap().isEmpty()) {
+            Logger.debug(LOG_TAG, "No hosts to check at this moment");
 
-    protected static synchronized void start() {
-        if (mScheduledTask != null || !mActive) return;
-
-        Logger.debug(LOG_TAG, "starting");
-
-        if (scheduler == null) {
-            Logger.debug(LOG_TAG, "creating new thread pool");
-            scheduler = Executors.newScheduledThreadPool(1);
-        }
-
-        initializeConnectionType();
-
-        mScheduledTask = scheduler.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    if (mHosts.isEmpty()) {
-                        Logger.debug(LOG_TAG, "No hosts to check at this moment");
-                        return;
-                    }
-
-                    Logger.debug(LOG_TAG, "Starting reachability check");
-
-                    for (Host host : mHosts.keySet()) {
-                        Status prevStatus = mHosts.get(host);
-                        boolean currentReachable = isReachable(host);
-                        ConnectionType currentConnectionType = getConnectionType();
-
-                        if (prevStatus.isReachable() != currentReachable
-                            || prevStatus.getConnectionType() != currentConnectionType) {
-                            Logger.debug(LOG_TAG, "Host " + host.getHost() + " is currently " +
-                                    (currentReachable ? "reachable" : "unreachable") +
-                                    " on port " + host.getPort() + " via " + currentConnectionType);
-                            mHosts.put(host, new Status(currentReachable, currentConnectionType));
-                            notifyStatus(host, prevStatus.isReachable(), currentReachable,
-                                         prevStatus.getConnectionType(), currentConnectionType);
-                        }
-                    }
-
-                    Logger.debug(LOG_TAG, "Reachability check completed");
-
-                } catch (Exception exc) {
-                    Logger.error(LOG_TAG, "Unexpected error in reachability check", exc);
-                }
-            }
-
-            private boolean isReachable(Host host) {
-                boolean currentReachable;
-                Socket socket = null;
-
-                try {
-                    socket = new Socket();
-                    socket.connect(host.resolve(), mConnectTimeout);
-                    currentReachable = true;
-
-                } catch (Exception exc) {
-                    currentReachable = false;
-
-                } finally {
-                    if (socket != null) {
-                        try {
-                            socket.close();
-                        } catch (Exception exc) {
-                            Logger.debug(LOG_TAG, "Error while closing socket.");
-                        }
-                    }
-                }
-                return currentReachable;
-            }
-        }, 0, mCheckInterval, TimeUnit.SECONDS);
-    }
-
-    private static void initializeConnectionType() {
-        ConnectivityManager connMan =
-                (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        NetworkInfo info = connMan.getActiveNetworkInfo();
-        if (info == null) {
-            mConnectionType = -1;
         } else {
-            mConnectionType = info.getType();
+            ConnectionType connectionType = getConnectionTypeFromIntent(intent);
+
+            if (connectionType == ConnectionType.NONE) {
+                notifyThatAllTheHostsAreUnreachable(connectionType, config);
+            } else {
+                checkReachability(connectionType, config);
+            }
         }
+
+        wakeLock.release();
     }
 
-    private static synchronized void notifyStatus(Host host,
-                                                  boolean previousReachable,
-                                                  boolean reachable,
-                                                  ConnectionType previousConnectionType,
-                                                  ConnectionType currentConnectionType) {
+    private void notifyThatAllTheHostsAreUnreachable(ConnectionType connectionType,
+                                                     HostMonitorConfig config) {
+        Logger.debug(LOG_TAG, "No active connection. Notifying that all the hosts are unreachable");
+
+        Iterator<Host> iterator = config.getHostsMap().keySet().iterator();
+
+        while (iterator.hasNext()) {
+            Host host = iterator.next();
+
+            Status previousStatus = config.getHostsMap().get(host);
+            Status newStatus = new Status(false, connectionType);
+
+            Logger.debug(LOG_TAG, "Host " + host.getHost() + " is currently unreachable on port "
+                                  + host.getPort());
+
+            config.getHostsMap().put(host, newStatus);
+            notifyStatus(config.getBroadcastAction(), host, previousStatus, newStatus);
+        }
+
+        config.saveHostsMap();
+    }
+
+    private void checkReachability(ConnectionType connectionType, HostMonitorConfig config) {
+        Logger.debug(LOG_TAG, "Starting reachability check");
+
+        Iterator<Host> iterator = config.getHostsMap().keySet().iterator();
+
+        while (iterator.hasNext()) {
+            Host host = iterator.next();
+
+            Status previousStatus = config.getHostsMap().get(host);
+            boolean currentReachable = isReachable(host, config.getSocketTimeout(), config.getMaxAttempts());
+            Status newStatus = new Status(currentReachable, connectionType);
+
+            Logger.debug(LOG_TAG, "Host " + host.getHost() + " is currently " +
+                    (currentReachable ? "reachable" : "unreachable") +
+                    " on port " + host.getPort() + " via " + connectionType);
+
+            config.getHostsMap().put(host, newStatus);
+            notifyStatus(config.getBroadcastAction(), host, previousStatus, newStatus);
+        }
+
+        config.saveHostsMap();
+        Logger.debug(LOG_TAG, "Reachability check finished!");
+    }
+
+    private ConnectionType getConnectionTypeFromIntent(Intent intent) {
+        int connTypeInt = intent.getIntExtra(PARAM_CONNECTION_TYPE, -1);
+
+        ConnectionType type;
+
+        if (connTypeInt < 0) {
+            type = getCurrentConnectionType(this);
+        } else {
+            type = ConnectionType.values()[connTypeInt];
+        }
+
+        return type;
+    }
+
+    protected static ConnectionType getCurrentConnectionType(Context context) {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+
+        if (networkInfo == null || !networkInfo.isConnected()) {
+            return ConnectionType.NONE;
+        }
+
+        int type = networkInfo.getType();
+
+        if (type == ConnectivityManager.TYPE_MOBILE) return ConnectionType.MOBILE;
+        if (type == ConnectivityManager.TYPE_WIFI) return ConnectionType.WIFI;
+
+        return ConnectionType.NONE;
+    }
+
+    private boolean isReachable(Host host, int connectTimeout, int maxAttempts) {
+        int attempts = 0;
+        boolean reachable = false;
+
+        while (attempts < maxAttempts) {
+            reachable = isReachable(host, connectTimeout);
+            if (reachable) break;
+            attempts++;
+        }
+
+        return reachable;
+    }
+
+    private boolean isReachable(Host host, int connectTimeout) {
+        boolean reachable;
+        Socket socket = null;
+
+        try {
+            socket = new Socket();
+            socket.connect(host.resolve(), connectTimeout);
+            reachable = true;
+
+        } catch (Exception exc) {
+            reachable = false;
+
+        } finally {
+            if (socket != null) {
+                try {
+                    socket.close();
+                } catch (Exception exc) {
+                    Logger.debug(LOG_TAG, "Error while closing socket.");
+                }
+            }
+        }
+        return reachable;
+    }
+
+    private void notifyStatus(String broadcastAction,
+                              Host host,
+                              Status previousStatus,
+                              Status currentStatus) {
         HostStatus status = new HostStatus()
                 .setHost(host.getHost())
                 .setPort(host.getPort())
-                .setPreviousReachable(previousReachable)
-                .setReachable(reachable)
-                .setPreviousConnectionType(previousConnectionType)
-                .setConnectionType(currentConnectionType);
+                .setPreviousReachable(previousStatus.isReachable())
+                .setPreviousConnectionType(previousStatus.getConnectionType())
+                .setReachable(currentStatus.isReachable())
+                .setConnectionType(currentStatus.getConnectionType());
 
         Intent broadcastStatus = new Intent();
-        broadcastStatus.setAction(mBroadcastActionString);
-        broadcastStatus.putExtra(PARAM_STATUS, status);
+        broadcastStatus.setAction(broadcastAction);
+        broadcastStatus.putExtra(HostStatus.PARAM_STATUS, status);
 
-        mContext.sendBroadcast(broadcastStatus);
-    }
-
-    private static ConnectionType getConnectionType() {
-        if (mConnectionType < 0) return ConnectionType.NONE;
-        if (mConnectionType == ConnectivityManager.TYPE_MOBILE) return ConnectionType.MOBILE;
-        if (mConnectionType == ConnectivityManager.TYPE_WIFI) return ConnectionType.WIFI;
-
-        Logger.error(LOG_TAG, "Unimplemented connection type: " + mConnectionType + ", open a bug issue!");
-        return ConnectionType.NONE;
+        sendBroadcast(broadcastStatus);
     }
 }

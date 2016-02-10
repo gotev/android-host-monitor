@@ -3,8 +3,7 @@ package net.gotev.hostmonitor;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+import android.os.PowerManager;
 
 /**
  * Monitors connectivity changes and starts or stops the HostMonitor accordingly.
@@ -14,22 +13,29 @@ public class HostMonitorConnectivityReceiver extends BroadcastReceiver {
 
     private static final String LOG_TAG = "HostMonitorCR";
 
+    private static volatile PowerManager.WakeLock wakeLock;
+
     @Override
     public void onReceive(Context context, Intent intent) {
-        ConnectivityManager connectivityManager =
-                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        manageWakeLock(context);
 
-        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        ConnectionType connectionType = HostMonitor.getCurrentConnectionType(context);
 
-        if (networkInfo != null && networkInfo.isConnected()) {
-            Logger.debug(LOG_TAG, "connection available :)");
-            HostMonitor.setConnectionType(networkInfo.getType());
-            HostMonitor.start();
+        Logger.debug(LOG_TAG, (connectionType == ConnectionType.NONE) ?
+                              "connection unavailable :(" : "connection available :)");
 
-        } else {
-            Logger.debug(LOG_TAG, "connection unavailable :(");
-            HostMonitor.setConnectionType(-1);
-            HostMonitor.stop(true);
+
+        HostMonitor.start(context, connectionType);
+    }
+
+    private synchronized void manageWakeLock(Context context) {
+        if (wakeLock != null && wakeLock.isHeld()) {
+            wakeLock.release();
         }
+
+        PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, LOG_TAG);
+        wakeLock.setReferenceCounted(false);
+        wakeLock.acquire(10 * 1000);
     }
 }
