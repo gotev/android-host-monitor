@@ -2,22 +2,22 @@ apply plugin: 'com.android.library'
 apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
 
-def siteUrl = 'https://github.com/alexbbb/android-host-monitor/'
-def gitUrl = 'https://github.com/alexbbb/android-host-monitor.git'
+def siteUrl = 'https://github.com/gotev/android-host-monitor/'
+def gitUrl = 'https://github.com/gotev/android-host-monitor.git'
 def projectName = "android-host-monitor"
-def projectDesc = "Easily monitor remote hosts and ports reachability on Android."
-def projectGroup = "com.alexbbb"
+def projectDesc = "Monitor remote host's TCP ports reachability on Android"
+def projectGroup = "net.gotev"
 group = projectGroup
-version = "1.0"
+version = "2.0"
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "23.0.1"
+    buildToolsVersion "23.0.2"
 
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 23
-        versionCode 1
+        versionCode 2
         versionName version
     }
     buildTypes {
@@ -29,6 +29,7 @@ android {
 }
 
 dependencies {
+    compile 'com.google.code.gson:gson:2.5'
 }
 
 // add the following information to the file: local.properties situated in the parent directory of
@@ -45,6 +46,8 @@ properties.load(project.rootProject.file('local.properties').newDataInputStream(
 install {
     repositories.mavenInstaller {
         pom.project {
+            name projectName
+            description projectDesc
             packaging 'aar'
             groupId projectGroup
             version version
@@ -57,8 +60,8 @@ install {
             }
             developers {
                 developer {
-                    id 'alexbbb'
-                    name 'Alex Gotev'
+                    id 'gotev'
+                    name 'Aleksandar Gotev'
                 }
             }
             scm {
@@ -95,8 +98,20 @@ task sourcesJar(type: Jar) {
 }
 
 task javadoc(type: Javadoc) {
+    title = "Android Host Monitor $project.version API"
+    description "Generates Javadoc"
     source = android.sourceSets.main.java.srcDirs
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    classpath += files(android.bootClasspath)
+    exclude '**/BuildConfig.java', '**/R.java'
+    options {
+        windowTitle("Android Host Monitor $project.version Reference")
+        locale = 'en_US'
+        encoding = 'UTF-8'
+        charSet = 'UTF-8'
+        links("http://docs.oracle.com/javase/7/docs/api/");
+        linksOffline("http://d.android.com/reference", "${android.sdkDirectory}/docs/reference");
+        setMemberLevel(JavadocMemberLevel.PUBLIC)
+    }
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
