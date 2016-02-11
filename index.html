@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Android Host Monitor : Easily monitor device network state and remote hosts reachability on Android">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Android Host Monitor</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/gotev/android-host-monitor">View on GitHub</a>
+
+          <h1 id="project_title">Android Host Monitor</h1>
+          <h2 id="project_tagline">Easily monitor device network state and remote hosts reachability on Android</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/gotev/android-host-monitor/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/gotev/android-host-monitor/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <p><a href="http://android-arsenal.com/details/1/2626"><img src="https://img.shields.io/badge/Android%20Arsenal-Android%20Host%20Monitor-brightgreen.svg?style=flat" alt="Android Arsenal"></a> <a href="https://bintray.com/gotev/maven/android-host-monitor/_latestVersion"> <img src="https://api.bintray.com/packages/gotev/maven/android-host-monitor/images/download.svg" alt="Download"> </a> <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&amp;business=alexgotev%40gmail%2ecom&amp;lc=US&amp;item_name=Android%20Upload%20Service&amp;item_number=AndroidHostMonitor&amp;currency_code=EUR&amp;bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted"><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" alt="Donate"></a></p>
+
+<h2>
+<a id="purpose" class="anchor" href="#purpose" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Purpose</h2>
+
+<p>In today's massively interconnected world, it's a common thing for an App to communicate with remote servers to provide contents and functionalities to the end user, so it's a good thing to check if the app can "talk" with the needed servers before doing any other network operation. Often the app has to do something based on the reachability status of a particular server or handle transitions between networks. This kind of checking can easily become a mess when we have to deal with continuous network switching (Mobile to WiFi, WiFi to Mobile, Airplane mode, no connection) and battery life! Android Host Monitor handles that for you and let you focus purely on your app's business logic.</p>
+
+<h2>
+<a id="setup-" class="anchor" href="#setup-" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Setup <a name="setup"></a>
+</h2>
+
+<h4>
+<a id="maven" class="anchor" href="#maven" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Maven</h4>
+
+<pre><code>&lt;dependency&gt;
+  &lt;groupId&gt;net.gotev&lt;/groupId&gt;
+  &lt;artifactId&gt;hostmonitor&lt;/artifactId&gt;
+  &lt;version&gt;2.0&lt;/version&gt;
+  &lt;type&gt;aar&lt;/type&gt;
+&lt;/dependency&gt;
+</code></pre>
+
+<h4>
+<a id="gradle" class="anchor" href="#gradle" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Gradle</h4>
+
+<pre><code>dependencies {
+    compile 'net.gotev:hostmonitor:2.0@aar'
+}
+</code></pre>
+
+<p>and do a project sync. Check <a href="http://gotev.github.io/android-host-monitor/javadoc/">JavaDocs</a> for a complete reference.</p>
+
+<h2>
+<a id="get-started" class="anchor" href="#get-started" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Get started</h2>
+
+<p>Configuring a remote host reachability check is as simple as:</p>
+
+<div class="highlight highlight-source-java"><pre><span class="pl-k">new</span> <span class="pl-smi">HostMonitorConfig</span>(context)
+        .setBroadcastAction(<span class="pl-smi">BuildConfig</span><span class="pl-c1"><span class="pl-k">.</span>APPLICATION_ID</span>)
+        .add(<span class="pl-s"><span class="pl-pds">"</span>my.server.com<span class="pl-pds">"</span></span>, <span class="pl-c1">80</span>)
+        .save();</pre></div>
+
+<p>You can do that from wherever you have a <code>Context</code>. What you've done here is the following:</p>
+
+<ul>
+<li>you've set the broadcast action used by the library to notify reachability changes. In this case you used the Gradle application ID, but you can use whatever string you want, as long as it's unique in your app.</li>
+<li>you've added the monitoring of <code>my.server.com</code> on port <code>80</code>. The library will immediately perform a reachability check and notify you of the status. Whenever the device connectivity status changes (e.g. from WiFi to 3G, from 3G to Airplane, from no connection to 3G, ...) the library will automatically perform a reachability check in the background and will notify you only if the status has been changed from the last time you received a notification.</li>
+</ul>
+
+<p>When you call <code>save()</code> the settings are persisted and immediately applied.</p>
+
+<p>Settings survives to application restarts and android restarts, so until you want to change the host monitor configuration, you can simply start the reachability check when your app starts by invoking:</p>
+
+<div class="highlight highlight-source-java"><pre><span class="pl-k">new</span> <span class="pl-smi">HostMonitorConfig</span>(context)<span class="pl-k">.</span>save();</pre></div>
+
+<p>The library can also automatically perform scheduled periodic reachability checks, so for example if you want to monitor your server every 15 minutes, all you have to do is:</p>
+
+<div class="highlight highlight-source-java"><pre><span class="pl-k">new</span> <span class="pl-smi">HostMonitorConfig</span>(context)<span class="pl-k">.</span>setCheckIntervalInMinutes(<span class="pl-c1">15</span>)<span class="pl-k">.</span>save();</pre></div>
+
+<p>Bear in mind that more frequent reachability checks drains your battery faster!</p>
+
+<p>You can also set other things such as socket connection timeout and maximum connection attempts before notifying failure. Check <a href="http://gotev.github.io/android-host-monitor/javadoc/">JavaDocs</a>.</p>
+
+<h4>
+<a id="unmonitor-a-host-and-port" class="anchor" href="#unmonitor-a-host-and-port" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Unmonitor a host and port</h4>
+
+<div class="highlight highlight-source-java"><pre><span class="pl-k">new</span> <span class="pl-smi">HostMonitorConfig</span>(context)<span class="pl-k">.</span>remove(<span class="pl-s"><span class="pl-pds">"</span>my.server.com<span class="pl-pds">"</span></span>, <span class="pl-c1">80</span>)<span class="pl-k">.</span>save();</pre></div>
+
+<h4>
+<a id="remove-all-the-monitored-hosts" class="anchor" href="#remove-all-the-monitored-hosts" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Remove all the monitored hosts</h4>
+
+<div class="highlight highlight-source-java"><pre><span class="pl-k">new</span> <span class="pl-smi">HostMonitorConfig</span>(context)<span class="pl-k">.</span>removeAll()<span class="pl-k">.</span>save();</pre></div>
+
+<p>When there are no hosts left to be monitored, the library automatically shuts down the connectivity monitoring and clears all the scheduled checks.</p>
+
+<h4>
+<a id="reset-configuration-to-factory-defaults" class="anchor" href="#reset-configuration-to-factory-defaults" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Reset configuration to factory defaults</h4>
+
+<p>If you want to reset the persisted configuration, just invoke:</p>
+
+<div class="highlight highlight-source-java"><pre><span class="pl-smi">HostMonitorConfig</span><span class="pl-k">.</span>reset(context);</pre></div>
+
+<p>This will reset the configuration to factory defaults and will stop any active and scheduled network check.</p>
+
+<h4>
+<a id="receive-reachability-status-changes-" class="anchor" href="#receive-reachability-status-changes-" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Receive reachability status changes <a name="receive-status"></a>
+</h4>
+
+<p>To listen for the status, subclass <code>HostMonitorBroadcastReceiver</code>.
+If you want to monitor host reachability globally in your app, all you have to do is create a new class (called <code>HostReachabilityReceiver</code> in this example):</p>
+
+<div class="highlight highlight-source-java"><pre><span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">HostReachabilityReceiver</span> <span class="pl-k">extends</span> <span class="pl-e">HostMonitorBroadcastReceiver</span> {
+    <span class="pl-k">@Override</span>
+    <span class="pl-k">public</span> <span class="pl-k">void</span> <span class="pl-en">onHostStatusChanged</span>(<span class="pl-smi">HostStatus</span> <span class="pl-v">status</span>) {
+        <span class="pl-smi">Log</span><span class="pl-k">.</span>i(<span class="pl-s"><span class="pl-pds">"</span>HostReachability<span class="pl-pds">"</span></span>, status<span class="pl-k">.</span>toString());
+    }
+}</pre></div>
+
+<p>and register it as a Broadcast receiver in your manifest:</p>
+
+<div class="highlight highlight-text-xml"><pre>&lt;<span class="pl-ent">receiver</span>
+    <span class="pl-e">android</span><span class="pl-e">:</span><span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>.HostReachabilityReceiver<span class="pl-pds">"</span></span>
+    <span class="pl-e">android</span><span class="pl-e">:</span><span class="pl-e">enabled</span>=<span class="pl-s"><span class="pl-pds">"</span>true<span class="pl-pds">"</span></span>
+    <span class="pl-e">android</span><span class="pl-e">:</span><span class="pl-e">exported</span>=<span class="pl-s"><span class="pl-pds">"</span>false<span class="pl-pds">"</span></span> &gt;
+    &lt;<span class="pl-ent">intent-filter</span>&gt;
+        &lt;<span class="pl-ent">action</span> <span class="pl-e">android</span><span class="pl-e">:</span><span class="pl-e">name</span>=<span class="pl-s"><span class="pl-pds">"</span>com.yourcompany.yourapp.reachability<span class="pl-pds">"</span></span> /&gt;
+    &lt;/<span class="pl-ent">intent-filter</span>&gt;
+&lt;/<span class="pl-ent">receiver</span>&gt;</pre></div>
+
+<p><code>com.yourcompany.yourapp.reachability</code> must be the same string you set as broadcast action in the configuration, otherwise you will not receive reachability events.</p>
+
+<p>You can receive status updates also in your <code>Activity</code> or <code>Service</code>. Here there is an example inside an <code>Activity</code>:</p>
+
+<div class="highlight highlight-source-java"><pre><span class="pl-k">public</span> <span class="pl-k">class</span> <span class="pl-en">YourActivity</span> <span class="pl-k">extends</span> <span class="pl-e">Activity</span> {
+
+    <span class="pl-k">private</span> <span class="pl-k">final</span> <span class="pl-smi">HostMonitorBroadcastReceiver</span> receiver <span class="pl-k">=</span>
+      <span class="pl-k">new</span> <span class="pl-smi">HostMonitorBroadcastReceiver</span>() {
+        <span class="pl-k">@Override</span>
+        <span class="pl-k">public</span> <span class="pl-k">void</span> <span class="pl-en">onHostStatusChanged</span>(<span class="pl-smi">HostStatus</span> <span class="pl-v">status</span>) {
+           <span class="pl-smi">Log</span><span class="pl-k">.</span>i(<span class="pl-s"><span class="pl-pds">"</span>HostMonitor<span class="pl-pds">"</span></span>, status<span class="pl-k">.</span>toString());
+        }
+      };
+
+    <span class="pl-k">@Override</span>
+    <span class="pl-k">protected</span> <span class="pl-k">void</span> <span class="pl-en">onResume</span>() {
+        <span class="pl-v">super</span><span class="pl-k">.</span>onResume();
+        receiver<span class="pl-k">.</span>register(<span class="pl-v">this</span>);
+    }
+
+    <span class="pl-k">@Override</span>
+    <span class="pl-k">protected</span> <span class="pl-k">void</span> <span class="pl-en">onPause</span>() {
+        <span class="pl-v">super</span><span class="pl-k">.</span>onPause();
+        receiver<span class="pl-k">.</span>unregister(<span class="pl-v">this</span>);
+    }
+}</pre></div>
+
+<p>A partial wake lock is automatically held for the entire execution of the <code>onHostStatusChanged</code> method and is released as soon as the method returns.</p>
+
+<h2>
+<a id="logging-" class="anchor" href="#logging-" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Logging <a name="logging"></a>
+</h2>
+
+<p>By default the library logging is disabled. You can enable debug log by invoking:</p>
+
+<div class="highlight highlight-source-java"><pre><span class="pl-smi">Logger</span><span class="pl-k">.</span>setLogLevel(<span class="pl-smi">LogLevel</span><span class="pl-c1"><span class="pl-k">.</span>DEBUG</span>);</pre></div>
+
+<p>The library logger uses <code>android.util.Log</code>, but you can override that by providing your own logger implementation like this:</p>
+
+<div class="highlight highlight-source-java"><pre><span class="pl-smi">Logger</span><span class="pl-k">.</span>setLoggerDelegate(<span class="pl-k">new</span> <span class="pl-smi">Logger</span>.<span class="pl-smi">LoggerDelegate</span>() {
+    <span class="pl-k">@Override</span>
+    <span class="pl-k">public</span> <span class="pl-k">void</span> <span class="pl-en">error</span>(<span class="pl-smi">String</span> <span class="pl-v">tag</span>, <span class="pl-smi">String</span> <span class="pl-v">message</span>) {
+        <span class="pl-c">//your own implementation here</span>
+    }
+
+    <span class="pl-k">@Override</span>
+    <span class="pl-k">public</span> <span class="pl-k">void</span> <span class="pl-en">error</span>(<span class="pl-smi">String</span> <span class="pl-v">tag</span>, <span class="pl-smi">String</span> <span class="pl-v">message</span>, <span class="pl-smi">Throwable</span> <span class="pl-v">exception</span>) {
+        <span class="pl-c">//your own implementation here</span>
+    }
+
+    <span class="pl-k">@Override</span>
+    <span class="pl-k">public</span> <span class="pl-k">void</span> <span class="pl-en">debug</span>(<span class="pl-smi">String</span> <span class="pl-v">tag</span>, <span class="pl-smi">String</span> <span class="pl-v">message</span>) {
+        <span class="pl-c">//your own implementation here</span>
+    }
+
+    <span class="pl-k">@Override</span>
+    <span class="pl-k">public</span> <span class="pl-k">void</span> <span class="pl-en">info</span>(<span class="pl-smi">String</span> <span class="pl-v">tag</span>, <span class="pl-smi">String</span> <span class="pl-v">message</span>) {
+        <span class="pl-c">//your own implementation here</span>
+    }
+});</pre></div>
+
+<h2>
+<a id="issues" class="anchor" href="#issues" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Issues</h2>
+
+<p>When you post a new issue regarding a possible bug in the library, make sure to add as many details as possible to be able to reproduce and solve the error you encountered in less time. Thank you :)</p>
+
+<h2>
+<a id="contribute-" class="anchor" href="#contribute-" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Contribute <a name="contribute"></a>
+</h2>
+
+<ul>
+<li>Do you have a new feature in mind?</li>
+<li>Do you know how to improve existing docs or code?</li>
+<li>Have you found a bug?</li>
+</ul>
+
+<p>Contributions are welcome and encouraged! Just fork the project and then send a pull request. Be ready to discuss your code and design decisions :)</p>
+
+<h2>
+<a id="do-you-like-the-project-" class="anchor" href="#do-you-like-the-project-" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Do you like the project? <a name="donate"></a>
+</h2>
+
+<p>Put a star, spread the word and if you want to offer me a free beer, <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&amp;business=alexgotev%40gmail%2ecom&amp;lc=US&amp;item_name=Android%20Upload%20Service&amp;item_number=AndroidHostMonitor&amp;currency_code=EUR&amp;bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted"><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" alt="Donate"></a></p>
+
+<h2>
+<a id="license-" class="anchor" href="#license-" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License <a name="license"></a>
+</h2>
+
+<pre><code>Copyright (C) 2015-2016 Aleksandar Gotev
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Android Host Monitor maintained by <a href="https://github.com/gotev">gotev</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
