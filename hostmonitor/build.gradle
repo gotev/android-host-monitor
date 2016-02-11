@@ -5,7 +5,7 @@ apply plugin: 'com.jfrog.bintray'
 def siteUrl = 'https://github.com/gotev/android-host-monitor/'
 def gitUrl = 'https://github.com/gotev/android-host-monitor.git'
 def projectName = "android-host-monitor"
-def projectDesc = "Monitor remote host's TCP ports reachability on Android"
+def projectDesc = "Easily monitor device network state and remote hosts reachability on Android"
 def projectGroup = "net.gotev"
 group = projectGroup
 version = "2.0"
