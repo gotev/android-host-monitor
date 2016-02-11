@@ -104,11 +104,13 @@ public class HostMonitor extends IntentService {
             Status previousStatus = config.getHostsMap().get(host);
             Status newStatus = new Status(false, connectionType);
 
-            Logger.debug(LOG_TAG, "Host " + host.getHost() + " is currently unreachable on port "
-                    + host.getPort());
+            if (!newStatus.equals(previousStatus)) {
+                Logger.debug(LOG_TAG, "Host " + host.getHost() + " is currently unreachable on port "
+                        + host.getPort());
 
-            config.getHostsMap().put(host, newStatus);
-            notifyStatus(config.getBroadcastAction(), host, previousStatus, newStatus);
+                config.getHostsMap().put(host, newStatus);
+                notifyStatus(config.getBroadcastAction(), host, previousStatus, newStatus);
+            }
         }
 
         config.saveHostsMap();
@@ -217,6 +219,8 @@ public class HostMonitor extends IntentService {
                 .setReachable(currentStatus.isReachable())
                 .setConnectionType(currentStatus.getConnectionType());
 
+        Logger.debug(LOG_TAG, "Broadcast with action: " + broadcastAction +
+                              " and status: " + status);
         Intent broadcastStatus = new Intent(broadcastAction);
         broadcastStatus.putExtra(PARAM_STATUS, status);
 
