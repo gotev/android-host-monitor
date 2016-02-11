@@ -27,7 +27,7 @@ dependencies {
     compile 'net.gotev:hostmonitor:2.0@aar'
 }
 ```
-and do a project sync.
+and do a project sync. Check [JavaDocs](http://gotev.github.io/android-host-monitor/javadoc/) for a complete reference.
 
 ## Get started
 Configuring a remote host reachability check is as simple as:
