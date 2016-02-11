@@ -1,78 +1,88 @@
-# Android Host Monitor
-Easily monitor remote hosts and ports reachability on Android.
+Android Host Monitor
+====================
 
-[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Android%20Host%20Monitor-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/2626)
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Android%20Host%20Monitor-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/2626) [ ![Download](https://api.bintray.com/packages/gotev/maven/android-host-monitor/images/download.svg) ](https://bintray.com/gotev/maven/android-host-monitor/_latestVersion) [![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=alexgotev%40gmail%2ecom&lc=US&item_name=Android%20Upload%20Service&item_number=AndroidHostMonitor&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted)
 
-[Setup instructions](#setup)
+Easily monitor device network state and remote hosts reachability on Android.
 
 ## Purpose
-In today's massively interconnected world, it's a common thing for an App to communicate with remote servers to provide contents and functionalities to the end user, so it's a good thing to check if the app can "talk" with the needed servers before doing any other network operation. Often the app has to do something based on the reachability status of a particular server or handle transitions between networks. This kind of checking can easily become a mess when we have to deal with continuous network switching (Mobile to WiFi, WiFi to Mobile, Airplane mode, no connection) and battery life! Android Host Monitor tries to solve this issue and let you focus purely on your app's business logic :)
+In today's massively interconnected world, it's a common thing for an App to communicate with remote servers to provide contents and functionalities to the end user, so it's a good thing to check if the app can "talk" with the needed servers before doing any other network operation. Often the app has to do something based on the reachability status of a particular server or handle transitions between networks. This kind of checking can easily become a mess when we have to deal with continuous network switching (Mobile to WiFi, WiFi to Mobile, Airplane mode, no connection) and battery life! Android Host Monitor handles that for you and let you focus purely on your app's business logic.
 
-## How it works
-Android Host Monitor is made of two parts:
-* A `BroadcastReceiver` monitoring the device's connectivity changes
-* A `ScheduledExecutorService` which periodically checks the reachability status of the configured hosts
+## Setup <a name="setup"></a>
+#### Maven
 
-When your device is connected (WiFi or Mobile), the scheduler is run at the interval that you have configured. When the device is not connected (it may be transitioning from a network to another one, airplane mode may be activated or the user is in the middle of a desert :D, ...) the scheduler is stopped to preserve battery life and a reachability status change gets broadcasted for all the configured hosts. When the connection becomes available again, the scheduler gets automatically restarted and a reachability test gets done immediately. The `HostMonitor` stops and doesn't do anything automatically only when you explicitly shut it down (read below to discover how).
-
-## Setup <a id="setup"></a>
-Ensure that you have jcenter in your gradle build file:
 ```
-repositories {
-    jcenter()
-}
+<dependency>
+  <groupId>net.gotev</groupId>
+  <artifactId>hostmonitor</artifactId>
+  <version>2.0</version>
+  <type>aar</type>
+</dependency>
 ```
-then in your dependencies section add:
+
+#### Gradle
 
 ```
 dependencies {
-    compile 'com.alexbbb:hostmonitor:1.0'
+    compile 'net.gotev:hostmonitor:2.0@aar'
 }
 ```
+and do a project sync.
 
-and do a project sync. To start using the library, you have to initialize it. I suggest you to do that in your `Application` subclass:
-
+## Get started
+Configuring a remote host reachability check is as simple as:
 ```java
-public class Initializer extends Application {
+new HostMonitorConfig(context)
+        .setBroadcastAction(BuildConfig.APPLICATION_ID)
+        .add("my.server.com", 80)
+        .save();
+```
+You can do that from wherever you have a `Context`. What you've done here is the following:
+* you've set the broadcast action used by the library to notify reachability changes. In this case you used the Gradle application ID, but you can use whatever string you want, as long as it's unique in your app.
+* you've added the monitoring of `my.server.com` on port `80`. The library will immediately perform a reachability check and notify you of the status. Whenever the device connectivity status changes (e.g. from WiFi to 3G, from 3G to Airplane, from no connection to 3G, ...) the library will automatically perform a reachability check in the background and will notify you only if the status has been changed from the last time you received a notification.
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
+When you call `save()` the settings are persisted and immediately applied.
 
-        // setup the broadcast action string which will be used to notify
-        // reachability changes. It can be any string of your choice. 
-        // Here's just an example:
-        HostMonitor.setBroadcastAction("com.yourcompany.yourapp.reachability");
-        
-        // add all the hosts and ports you want to monitor
-        HostMonitor.add("web.yourcompany.com", 80);
-        HostMonitor.add("web.yourcompany.com", 443);
-        HostMonitor.add("other.site.com", 5060);
-        
-        // invoke this method to enable debug messages (disabled by default)
-        //HostMonitor.enableDebug();
-        
-        // start the host monitor
-        HostMonitor.start(getApplicationContext(),
-                          HostMonitor.DEFAULT_CHEK_INTERVAL,
-                          HostMonitor.DEFAULT_TIMEOUT);
-    }
-}
+Settings survives to application restarts and android restarts, so until you want to change the host monitor configuration, you can simply start the reachability check when your app starts by invoking:
+```java
+new HostMonitorConfig(context).save();
 ```
 
-...and you're done, the setup is complete! You can add and remove the hosts to be monitored dynamically even after the host monitor is started.
+The library can also automatically perform scheduled periodic reachability checks, so for example if you want to monitor your server every 15 minutes, all you have to do is:
+```java
+new HostMonitorConfig(context).setCheckIntervalInMinutes(15).save();
+```
+Bear in mind that more frequent reachability checks drains your battery faster!
 
-## How to receive reachability status updates
-For your convenience, a reference `BroadcastReceiver` implementation has been made, so if you want to monitor host reachability globally in your app, all you have to do is create a new class (called `HostReachabilityReceiver` in this example):
+You can also set other things such as socket connection timeout and maximum connection attempts before notifying failure. Check [JavaDocs](http://gotev.github.io/android-host-monitor/javadoc/).
+
+#### Unmonitor a host and port
+```java
+new HostMonitorConfig(context).remove("my.server.com", 80).save();
+```
+
+#### Remove all the monitored hosts
+```java
+new HostMonitorConfig(context).removeAll().save();
+```
+When there are no hosts left to be monitored, the library automatically shuts down the connectivity monitoring and clears all the scheduled checks.
+
+#### Reset configuration to factory defaults
+If you want to reset the persisted configuration, just invoke:
+```java
+HostMonitorConfig.reset(context);
+```
+This will reset the configuration to factory defaults and will stop any active and scheduled network check.
+
+#### Receive reachability status changes <a name="receive-status"></a>
+To listen for the status, subclass `HostMonitorBroadcastReceiver`.
+If you want to monitor host reachability globally in your app, all you have to do is create a new class (called `HostReachabilityReceiver` in this example):
 
 ```java
 public class HostReachabilityReceiver extends HostMonitorBroadcastReceiver {
-
-    private static final String LOG_TAG = "HostReachability";
-
     @Override
     public void onHostStatusChanged(HostStatus status) {
-        Log.i(LOG_TAG, status.toString());
+        Log.i("HostReachability", status.toString());
     }
 }
 ```
@@ -90,21 +100,19 @@ and register it as a Broadcast receiver in your manifest:
 </receiver>
 ```
 
-You can receive status updates also in your activity:
+`com.yourcompany.yourapp.reachability` must be the same string you set as broadcast action in the configuration, otherwise you will not receive reachability events.
+
+You can receive status updates also in your `Activity` or `Service`. Here there is an example inside an `Activity`:
 
 ```java
 public class YourActivity extends Activity {
-
-    private static final String TAG = "YourActivity";
-
-    ...
 
     private final HostMonitorBroadcastReceiver receiver =
       new HostMonitorBroadcastReceiver() {
         @Override
         public void onHostStatusChanged(HostStatus status) {
-           Log.i(LOG_TAG, status.toString());
-        }  
+           Log.i("HostMonitor", status.toString());
+        }
       };
 
     @Override
@@ -120,16 +128,54 @@ public class YourActivity extends Activity {
     }
 }
 ```
+A partial wake lock is automatically held for the entire execution of the `onHostStatusChanged` method and is released as soon as the method returns.
 
-## How to stop the monitoring
-Call this method from anywhere you want to stop the `HostMonitor`:
+
+## Logging <a name="logging"></a>
+By default the library logging is disabled. You can enable debug log by invoking:
 ```java
-// true to send a broadcast host status update notifying that
-// all the monitored hosts are unreachable.
-HostMonitor.shutdown(true);
+Logger.setLogLevel(LogLevel.DEBUG);
 ```
 
-## License
+The library logger uses `android.util.Log`, but you can override that by providing your own logger implementation like this:
+```java
+Logger.setLoggerDelegate(new Logger.LoggerDelegate() {
+    @Override
+    public void error(String tag, String message) {
+        //your own implementation here
+    }
+
+    @Override
+    public void error(String tag, String message, Throwable exception) {
+        //your own implementation here
+    }
+
+    @Override
+    public void debug(String tag, String message) {
+        //your own implementation here
+    }
+
+    @Override
+    public void info(String tag, String message) {
+        //your own implementation here
+    }
+});
+```
+
+## Issues
+When you post a new issue regarding a possible bug in the library, make sure to add as many details as possible to be able to reproduce and solve the error you encountered in less time. Thank you :)
+
+## Contribute <a name="contribute"></a>
+* Do you have a new feature in mind?
+* Do you know how to improve existing docs or code?
+* Have you found a bug?
+
+Contributions are welcome and encouraged! Just fork the project and then send a pull request. Be ready to discuss your code and design decisions :)
+
+## Do you like the project? <a name="donate"></a>
+Put a star, spread the word and if you want to offer me a free beer, [![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=alexgotev%40gmail%2ecom&lc=US&item_name=Android%20Upload%20Service&item_number=AndroidHostMonitor&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted)
+
+## License <a name="license"></a>
 
     Copyright (C) 2015-2016 Aleksandar Gotev
 

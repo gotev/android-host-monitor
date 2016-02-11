@@ -87,6 +87,7 @@ public class HostMonitorConfig {
     /**
      * Set the broadcast action string to use when broadcasting host status changes
      * @param broadcastAction (e.g.: com.example.yourapp.hoststatus)
+     * @return {@link HostMonitorConfig}
      */
     public HostMonitorConfig setBroadcastAction(String broadcastAction) {
         if (broadcastAction == null || broadcastAction.isEmpty())
@@ -183,7 +184,7 @@ public class HostMonitorConfig {
     }
 
     /**
-     * Get socket timeout in milliseconds.
+     * Get socket timeout in milliseconds. By default is 2000.
      * @return the configured socket timeout
      */
     public int getSocketTimeout() {
@@ -223,7 +224,8 @@ public class HostMonitorConfig {
     }
 
     /**
-     * Get check interval in milliseconds.
+     * Get check interval in milliseconds. By default is zero, so no periodic check is
+     * performed until you set it.
      * @return the configured check interval in milliseconds
      */
     public int getCheckInterval() {
@@ -250,7 +252,7 @@ public class HostMonitorConfig {
 
     /**
      * Gets the maximum number of socket connections to perform before notifying that the port
-     * is unreachable.
+     * is unreachable. Default value is 3.
      * @return number of attempts
      */
     public int getMaxAttempts() {
@@ -270,6 +272,7 @@ public class HostMonitorConfig {
     /**
      * Resets the currently persisted configuration.
      * Disables the connectivity receiver and cancels all scheduled periodic checks (if any).
+     * @param context application context
      */
     public static void reset(Context context) {
         Logger.debug(HostMonitor.class.getSimpleName(), "reset configuration");
