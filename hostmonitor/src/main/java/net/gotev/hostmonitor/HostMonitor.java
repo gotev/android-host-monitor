@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 /**
  * Service which performs reachability checks of the configured hosts and ports.
@@ -202,8 +203,7 @@ public class HostMonitor extends IntentService {
                     .url(host.getCanonicalName())
                     .build();
 
-            Response response = client.newCall(request).execute();
-//            reachable = response.isSuccessful(); // Returns true if the code is in [200..300), which means the request was successfully received, understood, and accepted.
+            client.newCall(request).execute().body().close();
             reachable = true;
         } catch (Exception exc) {
             reachable = false;
