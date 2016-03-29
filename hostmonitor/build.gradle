@@ -30,6 +30,7 @@ android {
 
 dependencies {
     compile 'com.google.code.gson:gson:2.5'
+    compile 'com.squareup.okhttp3:okhttp:3.2.0'
 }
 
 // add the following information to the file: local.properties situated in the parent directory of

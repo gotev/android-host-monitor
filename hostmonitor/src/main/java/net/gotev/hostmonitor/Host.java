@@ -4,6 +4,7 @@ import java.net.InetSocketAddress;
 
 /**
  * Represents a host to monitor.
+ *
  * @author gotev (Aleksandar Gotev)
  */
 class Host {
@@ -25,6 +26,10 @@ class Host {
 
     public InetSocketAddress resolve() {
         return new InetSocketAddress(host, port);
+    }
+
+    public String getCanonicalName() {
+        return "http://" + host + ":" + port;
     }
 
     @Override

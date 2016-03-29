@@ -8,6 +8,11 @@ import android.net.NetworkInfo;
 import android.os.PowerManager;
 
 import java.net.Socket;
+import java.util.concurrent.TimeUnit;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * Service which performs reachability checks of the configured hosts and ports.
@@ -185,25 +190,23 @@ public class HostMonitor extends IntentService {
     }
 
     private boolean isReachable(Host host, int connectTimeout) {
-        boolean reachable;
-        Socket socket = null;
+        boolean reachable = false;
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(connectTimeout, TimeUnit.MILLISECONDS)
+                .readTimeout(connectTimeout, TimeUnit.MILLISECONDS)
+                .build();
 
         try {
-            socket = new Socket();
-            socket.connect(host.resolve(), connectTimeout);
-            reachable = true;
+            Request request = new Request.Builder()
+                    .url(host.getCanonicalName())
+                    .build();
 
+            Response response = client.newCall(request).execute();
+//            reachable = response.isSuccessful(); // Returns true if the code is in [200..300), which means the request was successfully received, understood, and accepted.
+            reachable = true;
         } catch (Exception exc) {
             reachable = false;
-
-        } finally {
-            if (socket != null) {
-                try {
-                    socket.close();
-                } catch (Exception exc) {
-                    Logger.debug(LOG_TAG, "Error while closing socket.");
-                }
-            }
         }
 
         return reachable;
