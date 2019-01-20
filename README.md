@@ -1,6 +1,8 @@
 Android Host Monitor
 ====================
 
+## This library has been discontinued! I strongly recommend using https://github.com/pwittchen/ReactiveNetwork instead
+
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Android%20Host%20Monitor-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/2626) [![Build Status](https://travis-ci.org/gotev/android-host-monitor.svg?branch=master)](https://travis-ci.org/gotev/android-host-monitor) [ ![Download](https://api.bintray.com/packages/gotev/maven/android-host-monitor/images/download.svg) ](https://bintray.com/gotev/maven/android-host-monitor/_latestVersion) [![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=alexgotev%40gmail%2ecom&lc=US&item_name=Android%20Upload%20Service&item_number=AndroidHostMonitor&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted)
 
 Easily monitor device network state and remote hosts reachability on Android.
